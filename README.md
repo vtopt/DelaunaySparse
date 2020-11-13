@@ -93,7 +93,7 @@ Tyler Chang, tchang@anl.gov.
 
 To cite this work, please use
 
-``
+```
 @article{TOMSalg1012,
 author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H.
 and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
@@ -110,4 +110,4 @@ month = {nov},
 articleno = {38},
 numpages = {20}
 }
-``
+```
