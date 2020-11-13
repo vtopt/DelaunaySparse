@@ -1,4 +1,4 @@
-   DELAUNAYSPARSE: Interpolation via the Delaunay Triangulation.
+# DELAUNAYSPARSE: Interpolation via the Delaunay Triangulation.
 
 The package DELAUNAYSPARSE contains serial and parallel codes, written
 in FORTRAN 2003 with OpenMP, for performing interpolation in medium to
@@ -50,8 +50,10 @@ To check that the installation of DELAUNAYSPARSES and DELAUNAYSPARSEP is
 correct, assuming that your Fortran compiler allows mixing fixed format
 .f and free format .f90 files in the same compile command, use the command
 
+``
 $FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f test_install.f90 \
   -o test_install $LIBS
+``
 
 where '$FORT' is a Fortran 2003 compliant compiler supporting OpenMP
 4.5, '$OPTS' is a list of compiler options, and '$LIBS' is a list of
@@ -62,16 +64,22 @@ include the compiler option for OpenMP.
 
 Then run the tests using
 
+``
 ./test_install
+``
 
 To compile and link the sample main programs sample{s|p}.f90, use
 
+``
 $FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f sample{s|p}.f90 \
   -o sample{s|p} $LIBS
+``
 
 similar to above.  To run a sample main program, use
 
+``
 ./sample{s|p} sample_input{2|4}d.dat
+``
 
 where 'sample_input{2|4}d.dat' could be replaced by any other similarly
 formatted data file.
