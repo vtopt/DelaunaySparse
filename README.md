@@ -1,6 +1,6 @@
 # DELAUNAYSPARSE: Interpolation via the Delaunay Triangulation.
 
-The package DELAUNAYSPARSE contains serial and parallel codes, written
+The package `DELAUNAYSPARSE` contains serial and parallel codes, written
 in FORTRAN 2003 with OpenMP, for performing interpolation in medium to
 high dimensions via a sparse subset of the Delaunay triangulation. The
 serial driver subroutine is DELAUNAYSPARSES and the parallel driver is
