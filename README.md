@@ -1,7 +1,7 @@
 # DELAUNAYSPARSE: Interpolation via the Delaunay Triangulation.
 
 The package DELAUNAYSPARSE contains serial and parallel codes, written
-in FORTRAN 2003 with OpenMP, for performing interpolation in medium to
+in FORTRAN 2003 with OpenMP 4.5, for performing interpolation in medium to
 high dimensions via a sparse subset of the Delaunay triangulation. The
 serial driver subroutine is `DELAUNAYSPARSES` and the parallel driver is
 `DELAUNAYSPARSEP`. Both subroutines use the `REAL_PRECISION` module from
@@ -38,7 +38,7 @@ The physical organization is as follows:
    data set for `samples.f90` and `samplep.f90`.
  * The files `lapack.f` and `blas.f` contain all LAPACK and BLAS
    subroutines that are referenced (both directly and indirectly) in
-   `DELAUNAYSPARSE`.
+   DELAUNAYSPARSE.
  * A sample GNU `Makefile` is provided.
 
 From here on, the files `samples.f90` and `samplep.f90` will be referred
@@ -86,19 +86,12 @@ formatted data file.
 
 ---------------------------------------------------------------------------
 
-For further inquiries, contact
-Tyler Chang, tchang@anl.gov.
-
----------------------------------------------------------------------------
-
 To cite this work, please use
 
 ```
 @article{TOMSalg1012,
-author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H.
-and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
-title = {Algorithm 1012: DELAUNAYSPARSE: Interpolation via a Sparse Subset of
-the Delaunay Triangulation in Medium to High Dimensions},
+author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
+title = {Algorithm 1012: {DELAUNAYSPARSE}: {I}nterpolation via a Sparse Subset of the {D}elaunay Triangulation in Medium to High Dimensions},
 year = {2020},
 publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
@@ -111,3 +104,8 @@ articleno = {38},
 numpages = {20}
 }
 ```
+
+---------------------------------------------------------------------------
+
+For further inquiries, contact
+Tyler Chang, tchang@anl.gov.
