@@ -1,5 +1,4 @@
-# ACM TOMS Algorithm 1012: DELAUNAYSPARSE
-## Interpolation via a Sparse Subset of the Delaunay Triangulation
+# ACM TOMS Algorithm 1012: DELAUNAYSPARSE -- Interpolation via a Sparse Subset of the Delaunay Triangulation
 
 The package DELAUNAYSPARSE (ACM TOMS Algorithm 1012) contains serial and
 parallel codes, written in FORTRAN 2003 with OpenMP 4.5, for performing
