@@ -1,19 +1,21 @@
-# DELAUNAYSPARSE: Interpolation via the Delaunay Triangulation.
+# ACM TOMS Algorithm 1012: DELAUNAYSPARSE
+## Interpolation via a Sparse Subset of the Delaunay Triangulation
 
-The package DELAUNAYSPARSE contains serial and parallel codes, written
-in FORTRAN 2003 with OpenMP 4.5, for performing interpolation in medium to
-high dimensions via a sparse subset of the Delaunay triangulation. The
-serial driver subroutine is `DELAUNAYSPARSES` and the parallel driver is
-`DELAUNAYSPARSEP`. Both subroutines use the `REAL_PRECISION` module from
-HOMPACK90 (ACM TOMS Algorithm 777) for approximately 64-bit precision
-on all known machines, and the SLATEC subroutine `DWNNLS` (ACM TOMS
-Algorithm 587) for solving an inequality constrained least squares
-problem. Additionally, `DELAUNAYSPARSE` depends on several BLAS and LAPACK
-subroutines. The module `DELSPARSE_MOD` contains the `REAL_PRECISION` (R8)
-data type, and interface blocks for `DELAUNAYSPARSES`, `DELAUNAYSPARSEP`,
-and `DWNNLS`. Comments at the top of each subroutine document their
-usage, and examples demonstrating their usage are provided by the
-sample command line programs in `samples.f90` and `samplep.f90`.
+The package DELAUNAYSPARSE (ACM TOMS Algorithm 1012) contains serial and
+parallel codes, written in FORTRAN 2003 with OpenMP 4.5, for performing
+interpolation in medium to high dimensions via a sparse subset of the
+Delaunay triangulation. The serial driver subroutine is `DELAUNAYSPARSES`
+and the parallel driver is `DELAUNAYSPARSEP`. Both subroutines use the
+`REAL_PRECISION` module from HOMPACK90 (ACM TOMS Algorithm 777) for
+approximately 64-bit precision on all known machines, and the SLATEC
+subroutine `DWNNLS` (ACM TOMS Algorithm 587) for solving an inequality
+constrained least squares problem. Additionally, `DELAUNAYSPARSE` depends
+on several BLAS and LAPACK subroutines. The module `DELSPARSE_MOD` contains
+the `REAL_PRECISION` (R8) data type, and interface blocks for
+`DELAUNAYSPARSES`, `DELAUNAYSPARSEP`, and `DWNNLS`. Comments at the top of
+each subroutine document their usage, and examples demonstrating their usage
+are provided by the sample command line programs in `samples.f90` and
+`samplep.f90`.
 
 The physical organization is as follows:
 
