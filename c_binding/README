@@ -1,0 +1,21 @@
+C bindings for the DELAUNAYSPARSE Fortran package.
+
+
+REQUIREMENTS:
+
+  A Fortran compiler that supports BIND(C).
+
+CONTRIBUTORS:
+
+  Thomas Lux, tchlux@vt.edu
+  Tyler Chang, tchang@anl.gov
+
+ACKNOWLEDGEMENT:
+
+  These C bindings were extracted from the output of fmodpy.
+
+  If you are interested in automatically generating Python wrappers for
+  modern Fortran code, please consider visiting:
+
+  https://github.com/tchlux/fmodpy
+

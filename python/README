@@ -1,0 +1,42 @@
+A Python3 wrapper for the DELAUNAYSPARSE Fortran package.
+
+
+REQUIREMENTS:
+
+  Python3.6+ with numpy package installed.
+  A Fortran compiler that supports BIND(C) and compiling shared objects.
+
+USAGE:
+
+  Update the configuration of the machine-specific Fortran compiler
+  and BLAS / LAPACK link commands (or use local blas.f lapack.f)
+  in the file "delsparse.py".
+
+  Now, in Python3.6+ code the Fortran package can be accessed by
+
+    import delsparse
+
+  with accompanying documentation built-in through the `help` command
+
+    help(delsparse)
+
+  and it is assumed that Fortran-contiguous NumPy arrays will be the
+  vessel for data entering and exiting the Fortran module. An example
+  Python script is provided in `example.py`. That script also defines a
+  convenience wrapper that converts C-style (row major) sets of points
+  into Fortran-style (column major) sets of points.
+
+CONTRIBUTORS:
+
+  Thomas Lux, tchlux@vt.edu
+  Tyler Chang, tchang@anl.gov
+
+ACKNOWLEDGEMENT:
+
+  This Python3 wrapper was partially generated using fmodpy.
+
+  If you are interested in automatically generating Python wrappers for
+  modern Fortran code, please consider visiting:
+
+  https://github.com/tchlux/fmodpy
+
