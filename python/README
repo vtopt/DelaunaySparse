@@ -5,6 +5,8 @@ REQUIREMENTS:
 
   Python3.6+ with numpy package installed.
   A Fortran compiler that supports BIND(C) and compiling shared objects.
+  The Python wrapper builds ".so" objects, and therefore only supports
+  Mac and Linux systems.
 
 USAGE:
 
