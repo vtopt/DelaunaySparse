@@ -25,8 +25,11 @@ directories could be independently downloaded.
    `example.py` demonstrates its usage. For convenience, copies of all
    Fortran code that is used by the Python wrapper are also included in
    this directory.
- * `c_binding` contains C bindings for the main Fortran subroutines, as
-   well as copies of the Fortran source code.
+ * `c_binding` contains C bindings for several variations of the main
+   Fortran subroutines, as well as copies of the Fortran source code.
+   A test file `test_install.c` can be used for usage examples. This
+   directory's internal README also contains best practices when calling
+   Fortran from C/C++.
 
 ## Citation
 
