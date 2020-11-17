@@ -2,6 +2,7 @@ FORT = gfortran
 CC = gcc
 CFLAGS = -c
 OPTS = -fopenmp 
+LEGACY = -std=legacy
 
 all: test_install.o delsparse_bind_c.o delsparse.o slatec.o lapack.o blas.o
 	$(FORT) $(OPTS) test_install.o delsparse_bind_c.o delsparse.o slatec.o lapack.o blas.o -o test_install
@@ -17,7 +18,7 @@ delsparse.o: delsparse.f90
 	$(FORT) $(CFLAGS) $(OPTS) delsparse.f90 -o delsparse.o
 
 slatec.o : slatec.f
-	$(FORT) $(CFLAGS) $(OPTS) slatec.f -o slatec.o
+	$(FORT) $(CFLAGS) $(OPTS) $(LEGACY) slatec.f -o slatec.o
 
 lapack.o : lapack.f
 	$(FORT) $(CFLAGS) $(OPTS) lapack.f -o lapack.o
