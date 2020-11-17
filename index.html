@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="description" content="DELAUNAYSPARSE" />
+<meta name="keywords" content="DELAUNAYSPARSE, interpolation, Delaunay triangulation, Delaunay interpolation, mathematical software, TOMS Algorithm" />
+<link rel="stylesheet" type="text/css" href="body.css" title="DELAUNAYSPARSE" media="screen,projection" />
+<title>DELAUNAYSPARSE</title>
+</head>
+
+<body>
+<div id="wrap">
+
+<div id="header">
+<p id="toplinks"></p>
+<h1>DELAUNAYSPARSE</h1>
+<p id="slogan">DELAUNAYSPARSE -- Interpolation via the Delaunay Triangulation</p>
+</div>
+
+<div id="content">
+<h2>About the Software</h2>
+<p>
+    <strong><span class="green">DELAUNAYSPARSE</span></strong> [1]
+    contains both serial and parallel codes written in Fortran 2003
+    (with OpenMP 4.5) for performing medium- to high-dimensional
+    interpolation via the Delaunay triangulation. To accommodate
+    the exponential growth in the size of the Delaunay triangulation in
+    high dimensions, DELAUNAYSPARSE computes only a sparse subset of the
+    complete Delaunay triangulation, as necessary for performing
+    interpolation at the user specified points.
+    DELAUNAYSPARSE implements the algorithm in [2] and
+    has been used for various applications including aerospace
+    engineering [3], HPC performance modeling [4,5], nonparametric
+    statistics [6], machine learning regression [7], and graph generation [8].
+</p>
+<p class="readmore">
+    <a href="usergd.html">Read the User Guide</a> &raquo;
+</p>
+
+<h2>Publications</h2>
+<a href="http://doi.org/10.1145/3422818" id="r1"><p>
+[1] T. H. Chang, L. T. Watson, T. C. H. Lux, A. R. Butt, K. W. Cameron,
+and Y. Hong, "Algorithm 1012: DELAUNAYSPARSE: Interpolation via a Sparse Subset
+of the Delaunay triangulation in Medium to High Dimensions",
+<i>ACM Trans. Math. Software</i>, 46, Article 38 (2020), 1-20.
+</p></a>
+
+<a href="http://doi.org/10.1145/3190645.3190680" id="r2"><p>
+[2] T. H. Chang, L. T. Watson, T. C. H. Lux, B. Li, L. Xu, A. R. Butt,
+K. W. Cameron, and Y. Hong, "A polynomial time algorithm for multivariate
+interpolation in arbitrary dimension via the Delaunay triangulation",
+in <i>Proc. 2018 ACMSE Conference.</i>, Association of Computing Machinery,
+Richmond, KY, USA, 2018, Article No. 13.
+</p></a>
+
+<a href="https://doi.org/10.2514/6.2019-1704" id="r3"><p>
+[3] M. Jrad, R. K. Kapania, J. A. Schetz, and L. T. Watson,
+"Self-learning, adaptive software for aerospace engineering applications:
+Example of oblique shocks in supersonic flow",
+in <i>AIAA Scitech 2019 Forum</i>, American Institute of Aeronautics and
+Astronautics, Inc., San Diego, CA, USA, 2019, 1704.
+</p></a>
+
+<a href="https://doi.org/10.22360/springsim.2018.hpc.003" id="r4"><p>
+[4] T. H. Chang, L. T. Watson, T. C. H. Lux, J. Bernard, B. Li, L. Xu,
+G. Back, A. R. Butt, K. W. Cameron, and Y. Hong,
+"Predicting system performance by interpolation using a high-dimensional
+Delaunay triangulation", in <i>Proc. SpringSim 2018, the 26th High Performance
+Computing Symposium (HPC '18)</i>, Society for Modeling and Simulation
+International, Baltimore, MD, USA, 2018, Article No. 2.
+</p></a>
+
+<a href="https://doi.org/10.22360/springsim.2018.hpc.009" id="r5"><p>
+[5] T. C. H. Lux, L. T. Watson, T. H. Chang, J. Bernard, B. Li, L. Xu,
+G. Back, A. R. Butt, K. W. Cameron, and Y. Hong, "Predictive modeling of
+I/O characteristics in high performance computing systems", in
+<i>Proc. SpringSim 2018, the 26th High Performance Computing
+Symposium (HPC '18)</i>, Society for Modeling and Simulation International,
+Baltimore, MD, USA, 2018, Article No. 8.
+</p></a>
+
+<a href="https://doi.org/10.1109/SECON.2018.8478814" id="r6"><p>
+[6] T. C. H. Lux, L. T. Watson, T. H. Chang, J. Bernard, B. Li, X. Yu,
+L. Xu, A. R. Butt, K. W. Cameron, Y. Hong, and D. Yao, "Nonparametric
+distribution models for predicting and managing computational performance
+variability", in <i>Proc. IEEE SoutheastCon 2018</i>, Institute of
+Electrical and Electronics Engineers, St. Petersburg, FL, USA, 2018,
+7 pages.
+</p></a>
+
+<a href="http://doi.org/10.1007/s11075-020-01040-2" id="r7"><p>
+[7] T. C. H. Lux, L. T. Watson, T. H. Chang, Y. Hong, and K. W. Cameron,
+"Interpolation of sparse high-dimensional data", <i>Numerical Algorithms</i>,
+(2020) 33 pages.
+</p></a>
+
+<a href="https://vtechworks.lib.vt.edu/handle/10919/98915" id="r8"><p>
+[8] T. H. Chang, "Mathematical Software for Multiobjective Optimization
+Problems".
+<i>Ph.D. thesis, Virginia Polytechnic Institute and State University,
+Blacksburg, VA, USA</i>, 2020.
+</p></a>
+</div>
+
+<div id="sidebar">
+<h2>Navigate</h2>
+<ul>
+<li><a href="index.html">Home</a>
+<li><a href="usergd.html">User Guide</a></li>
+<li><a href="delsparse.zip">Download TOMS src</a>
+<li><a href="py_delsparse.zip">Download Python wrapper</a>
+<li><a href="c_delsparse.zip">Download C bindings</a>
+</ul>
+<h2>Inqueries</h2>
+<p>
+Tyler Chang<br>
+Argonne National Lab<br>
+Lemont, IL 60439<br>
+<code>tchang at anl dot gov</code><br>
+</p>
+<p>
+Layne Watson<br>
+Virginia Tech<br>
+Blacksburg, VA 24061<br>
+<code>ltw at cs dot vt dot edu</code><br>
+<code>ltw at ieee dot org</code>
+</p>
+</div>
+
+<div id="footer">
+    <p> <b>Last Modified:</b> 11/17/2020 </p>
+    <p>&copy; 2020 <a href="#">DELAUNAYSPARSE</a></p>
+</div>
+
+</div>
+</body>
+</html>

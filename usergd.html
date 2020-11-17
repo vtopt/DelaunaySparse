@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="description" content="DELAUNAYSPARSE" />
+<meta name="keywords" content="DELAUNAYSPARSE, interpolation, Delaunay triangulation, Delaunay interpolation, mathematical software, TOMS Algorithm" />
+<link rel="stylesheet" type="text/css" href="body.css" title="DELAUNAYSPARSE" media="screen,projection" />
+<title>DELAUNAYSPARSE</title>
+</head>
+
+<body>
+<div id="wrap">
+
+<div id="header">
+<p id="toplinks"></p>
+<h1>DELAUNAYSPARSE</h1>
+<p id="slogan">DELAUNAYSPARSE -- Interpolation via the Delaunay Triangulation</p>
+</div>
+
+<div id="content">
+<h2>User Guide</h2>
+<p>
+The package
+<strong><a href="index.html"><span class="green">DELAUNAYSPARSE</span></a></strong>
+(ACM TOMS Algorithm 1012) contains serial and parallel codes, written in
+<code>FORTRAN 2003</code> with <code>OpenMP 4.5</code>, for performing
+interpolation in medium to high dimensions via a sparse subset of the
+Delaunay triangulation.
+In addition to the original <code>FORTRAN</code> source code, this site can
+be used to download a <code>Python 3.6+</code> wrapper and <code>C/C++</code>
+bindings for DELAUNAYSPARSE.
+Note that each of the three downloads is self-contained, with the
+<code>Python</code> wrapper and <code>C</code> bindings each containing
+a subset of the <code>FORTRAN</code> as is needed to build and run
+their respective functionalities.
+Command line drivers, which accept formatted data files, are also available
+by downloading the original <code>FORTRAN</code> source code.
+</p>
+<p>
+The serial driver subroutine is <code>DELAUNAYSPARSES</code>
+and the parallel driver subroutine is <code>DELAUNAYSPARSEP</code>.
+The subroutines <code>DELAUNAYSPARSE{S|P}</code> use the module
+<code>REAL_PRECISION</code> from <code>HOMPACK90</code>
+(ACM TOMS Algorithm 777) for specifying the real data type,
+and the subroutine <code>DWNNLS</code> from <code>SLATEC</code>
+to compute projections onto the convex hull during extrapolation.
+The master module <code>DELSPARSE_MOD</code> includes the
+<code>REAL_PRECISION</code> module and interface blocks for both 
+<code>DELAUNAYSPARSES</code> and <code>DELAUNAYSPARSEP</code>, as well as
+an interface block for the updated <code>SLATEC</code> subroutine
+<code>DWNNLS</code>, which may be of separate interest.
+Comments at the beginning of the driver subroutines
+<code>DELAUNAYSPARSE{S|P}</code> document the arguments and usage,
+and examples demonstrating their usage are provided in the
+sample programs <code>samples.f90</code> and <code>samplep.f90</code>.
+</p>
+<p>
+The physical organization of the main
+<a href="delsparse.zip">TOMS source download</a> into files is as follows.
+Further details on using the <a href="py_delsparse.zip">Python wrapper</a>
+and <a href="c_delsparse.zip">C bindings</a> downloads are given in their
+respective <code>README</code> files, which are included in the downloads.
+
+<ul>
+ <li> The file <code>delsparse.f90</code> contains the module
+   <code>REAL_PRECISION</code>, <code>DELSPARSE_MOD</code>, and
+   the driver subroutines <code>DELAUNAYSPARSES</code>, and
+   <code>DELAUNAYSPARSEP</code>.</li>
+ <li> The file <code>slatec.f</code> contains the subroutine
+   <code>DWNNLS</code> and its dependencies from the <code>SLATEC</code>
+   library. This library has been slightly modified to
+   comply with the modern Fortran standards. Additionally, legacy
+   implementations of the <code>BLAS</code> subroutines <code>DROTM</code>
+   and <code>DTROMG</code> have been included under different names to
+   avoid dependency issues. Depending on your compiler, you may still
+   receive warnings related to obsolete features.</li>
+ <li> The file <code>samples.f90</code> contains a sample command line program
+   demonstrating the usage of <code>DELAUNAYSPARSES</code>, with optional
+   arguments. This program can also be used to use <code>DELAUNAYSPARSES</code>
+   on formatted data files from the command line.</li>
+ <li> The file <code>samplep.f90</code> contains a sample command line program
+   demonstrating the usage of <code>DELAUNAYSPARSEP</code>, with optional
+   arguments. This program can also be used to use <code>DELAUNAYSPARSEP</code>
+   on formatted data files from the command line.</li>
+ <li> The file <code>test_install.f90</code> contains a simple test program
+   that checks whether the installation of DELAUNAYSPARSE appears correct,
+   based on the output to a small interpolation/extrapolation problem.</li>
+ <li> The file <code>sample_input2d.dat</code> contains a sample 2-dimensional
+   input data set for <code>samples.f90</code> and <code>samplep.f90</code>,
+   coming from the
+   <a href="https://varsys.cs.vt.edu/">VarSys project at Virginia Tech</a>.</li>
+ <li> The file <code>sample_input4d.dat</code> contains a sample 4-dimensional
+   input data set for <code>samples.f90</code> and <code>samplep.f90</code>,
+   coming from the
+   <a href="https://varsys.cs.vt.edu/">VarSys project at Virginia Tech</a>.</li>
+ <li> The files <code>lapack.f</code> and <code>blas.f</code> contain all
+   <code>LAPACK</code> and <code>BLAS</code>
+   subroutines that are referenced (both directly and indirectly) in
+   DELAUNAYSPARSE.</li>
+ <li> A sample GNU <code>Makefile</code> is provided.
+</ul>
+</p>
+
+<p>
+To check that the installation of <code>DELAUNAYSPARSES</code> and
+<code>DELAUNAYSPARSEP</code> is correct, assuming that your Fortran compiler
+allows mixing fixed format <code>.f</code> and free format <code>.f90</code>
+files in the same compile command, use the command
+</p>
+
+<pre>
+$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f test_install.f90 \
+  -o test_install $LIBS
+</pre>
+
+<p>
+where <code>$FORT</code> is a <code>FORTRAN 2003</code> compliant compiler
+supporting <code>OpenMP 4.5</code>, <code>$OPTS</code> is a list of compiler
+options, and <code>$LIBS</code> is a list of flags to link the
+<code>BLAS</code> and <code>LAPACK</code> libraries, if those exist on your
+system (in which case the files <code>blas.f</code> and <code>lapack.f</code>
+can be omitted from the compile command). To run the parallel code,
+<code>$OPTS</code> must include the compiler option for <code>OpenMP</code>.
+</p>
+
+<p>
+Then run the tests using
+</p>
+
+<pre>
+./test_install
+</pre>
+
+<p>
+To compile and link the sample main programs <code>sample{s|p}.f90</code>, use
+</p>
+
+<pre>
+$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f sample{s|p}.f90 \
+  -o sample{s|p} $LIBS
+</pre>
+
+<p>
+similar to above.  To run a sample main program, use
+</p>
+
+<pre>
+./sample{s|p} sample_input{2|4}d.dat
+</pre>
+
+<p>
+where <code>sample_input{2|4}d.dat</code> could be replaced by any other
+similarly formatted data file.
+</p>
+
+<hr>
+
+<p>
+Notes: DELAUNAYSPARSE is available free of charge via a permissive
+<a href="LICENSE">MIT LICENSE</a>.
+</p>
+</div>
+
+<div id="sidebar">
+<h2>Navigate</h2>
+<ul>
+<li><a href="index.html">Home</a>
+<li><a href="usergd.html">User Guide</a></li>
+<li><a href="delsparse.zip">Download TOMS src</a>
+<li><a href="py_delsparse.zip">Download Python wrapper</a>
+<li><a href="c_delsparse.zip">Download C bindings</a>
+</ul>
+<h2>Inqueries</h2>
+<p>
+Tyler Chang<br>
+Argonne National Lab<br>
+Lemont, IL 60439<br>
+<code>tchang at anl dot gov</code><br>
+</p>
+<p>
+Layne Watson<br>
+Virginia Tech<br>
+Blacksburg, VA 24061<br>
+<code>ltw at cs dot vt dot edu</code><br>
+<code>ltw at ieee dot org</code>
+</p>
+</div>
+
+<div id="footer">
+    <p> <b>Last Modified:</b> 10/17/2020 </p>
+    <p>&copy; 2020 <a href="#">DELAUNAYSPARSE</a></p>
+</div>
+
+</div>
+</body>
+</html>
