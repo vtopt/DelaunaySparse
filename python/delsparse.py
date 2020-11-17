@@ -9,7 +9,7 @@ import numpy as np
 fort_compiler = "gfortran"
 shared_object_name = "delsparse_clib.so"
 path_to_lib = os.path.join(os.curdir, shared_object_name)
-compile_options = "-fPIC -shared -O3 -fopenmp"
+compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
 # ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
 #    is necessary for supporting CPU parallelism during execution.
 blas_lapack = "-lblas -llapack"
