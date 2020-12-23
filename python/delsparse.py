@@ -8,7 +8,8 @@ import numpy as np
 # 
 fort_compiler = "gfortran"
 shared_object_name = "delsparse_clib.so"
-path_to_lib = os.path.join(os.curdir, shared_object_name)
+source_dir = os.path.abspath(os.path.dirname(__file__))
+path_to_lib = os.path.join(source_dir, shared_object_name)
 compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
 # ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
 #    is necessary for supporting CPU parallelism during execution.
@@ -29,6 +30,13 @@ except:
     # Remove the shared object if it exists, because it is faulty.
     if os.path.exists(shared_object_name):
         os.remove(shared_object_name)
+    # Warn the user if they are using a local blas and lapack that
+    # this is known to cause extrapolation errors.
+    if (blas_lapack == "blas.f lapack.f"):
+        import warnings
+        warnings.warn("\n  The provided 'blas.f' and 'lapack.f' are known to cause extrapolation errors."+
+                      "\n  Consider using local libraries via compiler flags instead (see config"+
+                      "\n  coments for 'blas_lapack' in '"+os.path.join(path_to_lib,__file__)+"').")
     # Compile a new shared object.
     command = " ".join([fort_compiler, compile_options, blas_lapack,
                         ordered_dependencies, "-o", path_to_lib])
@@ -280,7 +288,10 @@ def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
     
     # Setting up "ierr"
     ierr_local = np.asarray(ierr, dtype=ctypes.c_int)
-    ierr_dim_1 = ctypes.c_int(ierr_local.shape[0])
+    # In accordance with how the Fortran code might be normally used,
+    #  and mathematical notation, grabbing the last dimension allows
+    #  ierr to be passed as a column vector instead of a flat vector.
+    ierr_dim_1 = ctypes.c_int(ierr_local.shape[-1])
     
     # Setting up "interp_in"
     interp_in_present = ctypes.c_bool(True)
@@ -339,12 +350,18 @@ def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
         rnorm_present = ctypes.c_bool(False)
         rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
     elif (type(rnorm) == bool) and (rnorm):
+        # In accordance with how the Fortran code might be normally used,
+        #  and mathematical notation, grabbing the last dimension allows
+        #  rnorm to be passed as a column vector instead of a flat vector.
         rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[0])
+        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
     elif (not np.asarray(rnorm).flags.f_contiguous):
         raise(Exception("The numpy array given as argument 'rnorm' was not f_contiguous."))
     else:
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[0])
+        # In accordance with how the Fortran code might be normally used,
+        #  and mathematical notation, grabbing the last dimension allows
+        #  rnorm to be passed as a column vector instead of a flat vector.
+        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
     rnorm_local = np.asarray(rnorm, dtype=ctypes.c_double)
     
     # Setting up "ibudget"
@@ -630,7 +647,10 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
     
     # Setting up "ierr"
     ierr_local = np.asarray(ierr, dtype=ctypes.c_int)
-    ierr_dim_1 = ctypes.c_int(ierr_local.shape[0])
+    # In accordance with how the Fortran code might be normally used,
+    #  and mathematical notation, grabbing the last dimension allows
+    #  ierr to be passed as a column vector instead of a flat vector.
+    ierr_dim_1 = ctypes.c_int(ierr_local.shape[-1])
     
     # Setting up "interp_in"
     interp_in_present = ctypes.c_bool(True)
@@ -690,11 +710,17 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
         rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
     elif (type(rnorm) == bool) and (rnorm):
         rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
-        rnorm_dim_1 = rnorm.shape[0]
+        # In accordance with how the Fortran code might be normally used,
+        #  and mathematical notation, grabbing the last dimension allows
+        #  rnorm to be passed as a column vector instead of a flat vector.
+        rnorm_dim_1 = rnorm.shape[-1]
     elif (not np.asarray(rnorm).flags.f_contiguous):
         raise(Exception("The numpy array given as argument 'rnorm' was not f_contiguous."))
     else:
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[0])
+        # In accordance with how the Fortran code might be normally used,
+        #  and mathematical notation, grabbing the last dimension allows
+        #  rnorm to be passed as a column vector instead of a flat vector.
+        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
     rnorm_local = np.asarray(rnorm, dtype=ctypes.c_double)
     
     # Setting up "ibudget"
