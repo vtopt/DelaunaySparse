@@ -2,9 +2,6 @@
 # Import the Delaunay Fortran code.
 import delsparse
 
-# List out the "help" documentation.
-# help(delsparse)
-
 # Return the source point indices and weights associated with a set of
 # interpolation points. Takes points in row-major (C style) format.
 # 
@@ -79,41 +76,56 @@ def delaunay_simplex(pts, q, allow_extrapolation=True, print_errors=True,
     # Return the appropriate shaped pair of points and weights
     return (indices, weights)
 
+# This testing code is placed in a `main` block in case someone
+# copies this file to use the 'delaunay_simplex' function.
+if __name__ == "__main__":
+    # List out the "help" documentation.
+    # help(delsparse)
 
-# Declare some test function.
-import numpy as np
-f = lambda x: 3*x[0]+.5*np.cos(8*x[0])+np.sin(5*x[-1])
-np.random.seed(0)
+    # Declare some test function.
+    import numpy as np
+    f = lambda x: 3*x[0]+.5*np.cos(8*x[0])+np.sin(5*x[-1])
+    np.random.seed(0)
 
-# Construct a function that converts indices and weights into a real number prediction.
-def delaunay_approx(q, points, values):
-    q = np.array(q, dtype=float)
-    if len(q.shape) == 1:
-        pts, wts = delaunay_simplex(points.copy(), np.reshape(q,(1,len(q))))
-        return sum(values[pts[0]]*wts[0])
-    else:
-        pts, wts = delaunay_simplex(points.copy(), q)
-        return np.asarray([sum(values[i]*w) for (i,w) in zip(pts,wts)], dtype=float)
+    # Generate test data.
+    d = 2
+    test_size = 1000
+    train_sizes = (10, 50, 100, 200, 500, 1000, 5000, 10000)
+    # Construct the "test" data (q, f_q).
+    q = np.random.random(size=(test_size,d))
+    f_q = np.asarray(list(map(f,q)), dtype=float)
+    # Construct initial "train" data (x, y).
+    x = np.random.random(size=(train_sizes[0],d))
+    y = np.asarray(list(map(f,x)), dtype=float)
 
-# Generate test data.
-test_size = 1000
-q = np.random.random(size=(test_size,2))
-f_q = np.asarray(list(map(f,q)), dtype=float)
+    # Construct a function that converts indices and weights into a real number prediction.
+    def delaunay_approx(q, points, values):
+        q = np.array(q, dtype=float)
+        if len(q.shape) == 1:
+            inds, wts = delaunay_simplex(points.copy(), np.reshape(q,(1,len(q))))
+            return np.dot(values[inds[0]], wts[0])
+        else:
+            inds, wts = delaunay_simplex(points.copy(), q)
+            vals = values[inds.flatten()].reshape(wts.shape)
+            return np.sum(vals * wts, axis=1)
 
-# Show the convergence on the true function.
-for train_size in (10, 50, 100, 200, 500, 1000, 5000, 10000):
-    # Construct "training" data.
-    x = np.random.random(size=(train_size,2))
-    y = np.asarray([f(_) for _ in x], dtype=float)
-    # Approximate at points.
-    f_hat = delaunay_approx(q, x, y)
-    # Compute errors.
-    abs_error = abs(f_hat - f_q)
-    avg_abs_error = sum(abs_error) / test_size
-    max_abs_error = max(abs_error)
-    # Show errors.
-    print()
-    print("Train size:", train_size)
-    print("  maximum absolute error:  %.2f"%(max_abs_error))
-    print("  average absolute error:  %.2f"%(avg_abs_error))
+    # Show convergence by adding more points to the training set.
+    for n in train_sizes:
+        # Add more random points to the "training" set.
+        if (n > len(x)):
+            new_points = np.random.random(size=(n-len(x),d))
+            new_values = np.asarray(list(map(f,new_points)), dtype=float)
+            x = np.concatenate( (x,new_points), axis=0 )
+            y = np.concatenate( (y,new_values) )
+        # Approximate at points.
+        f_hat = delaunay_approx(q, x, y)
+        # Compute errors.
+        abs_error = abs(f_hat - f_q)
+        avg_abs_error = sum(abs_error) / test_size
+        max_abs_error = max(abs_error)
+        # Show errors.
+        print()
+        print("Train size:", n)
+        print("  maximum absolute error:  %.2f"%(max_abs_error))
+        print("  average absolute error:  %.2f"%(avg_abs_error))
 
