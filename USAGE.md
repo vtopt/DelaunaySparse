@@ -434,7 +434,7 @@ On output:
     - 82 : The LAPACK subroutine `DGETRS` has reported an illegal value.
     - 83 : The LAPACK subroutine `DORMQR` has reported an illegal value.
 
-  The error code 90 is unique to DELAUNAYSPARSEP.
+   The error code 90 is unique to DELAUNAYSPARSEP.
 
     - 90 : The value of `PMODE` is not valid.
 
