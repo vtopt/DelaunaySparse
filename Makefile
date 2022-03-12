@@ -100,7 +100,7 @@ bin:
 # Clean command
 
 clean:
-	cd src && rm -f *.o *.mod *.so
+	cd src && rm -f *.o *.mod *.so delsparses delsparsep
 	cd src/dependencies && rm -f *.o
 	cd extras/c_binding && rm -f *.o *.mod *.so
 	cd extras/c_binding/dependencies && rm -f *.o
