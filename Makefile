@@ -1,6 +1,7 @@
 # Your Fortran 2003 compliant compiler. Must support C bindings to build
 # delsparsec library (in extras/c_binding).
 FORT = gfortran
+CC = gcc
 
 # Set the prefix for your install directory. Installs in-place by default.
 PREFIX = $(PWD)
@@ -10,9 +11,13 @@ PREFIX = $(PWD)
 # Build without linking
 CFLAGS = -c
 
-# $OPTS must contain the flag for building OpenMP threadsafe (-fopenmp on GNU).
-# You can add additional flags (such as -O3) for code optimization
+# $OPTS must contain the flag for building OpenMP threadsafe (-fopenmp on
+# gfortran). You can add additional flags (such as -O3) for code optimization.
 OPTS = -fopenmp -O3 -fPIC
+
+# $COPTS must contain the C compiler (CC) flags for building OpenMP
+# threadsafe (-fopenmp on gcc). Can add additional flags, as with $OPTS.
+COPTS = -fopenmp
 
 # Link shared objects
 LFLAGS = -shared
@@ -49,10 +54,10 @@ install: include bin lib
 # Test installation
 
 test_install: test/test_install.f90 test/test_c_install.c include/delsparse_mod.mod include/delsparse.h lib/libdelsparse.so lib/libdelsparsec.so bin/delsparses bin/delsparsep
-	$(FORT) $(OPTS) test/test_install.f90 -I$(PREFIX)/include -L$(PREFIX)/lib -ldelsparse -o test/test_install
-	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(PREFIX)/lib && test/test_install
-	$(FORT) $(OPTS) test/test_c_install.c -I$(PREFIX)/include -L$(PREFIX)/lib -ldelsparsec -o test/test_c_install
-	export LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(PREFIX)/lib && test/test_c_install
+	$(FORT) $(OPTS) test/test_install.f90 -I$(PREFIX)/include -L$(PREFIX)/lib/ -ldelsparse -o test/test_install
+	export DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(PREFIX)/lib/ && test/test_install
+	$(CC) $(COPTS) test/test_c_install.c -I$(PREFIX)/include -L$(PREFIX)/lib/ -ldelsparsec -o test/test_c_install
+	export DYLD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(PREFIX)/lib/ && test/test_c_install
 	test/test_bin.sh
 
 # Make shared libs
