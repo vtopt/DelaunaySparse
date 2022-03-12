@@ -2,10 +2,11 @@ FORT = gfortran
 CC = gcc
 CFLAGS = -c
 OPTS = -fopenmp 
+LIBS = dependencies/blas.f dependencies/lapack.f
 LEGACY = -std=legacy
 
-all: test_install.o delsparse_bind_c.o delsparse.o slatec.o lapack.o blas.o
-	$(FORT) $(OPTS) test_install.o delsparse_bind_c.o delsparse.o slatec.o lapack.o blas.o -o test_install
+all: test_install.o delsparse_bind_c.o delsparse.o dependencies/slatec.o delsparse.h
+	$(FORT) $(OPTS) test_install.o delsparse_bind_c.o delsparse.o dependencies/slatec.o $(LIBS) -o test_install
 	./test_install
 
 test_install.o: test_install.c
@@ -17,14 +18,8 @@ delsparse_bind_c.o: delsparse_bind_c.f90 delsparse.o
 delsparse.o: delsparse.f90 
 	$(FORT) $(CFLAGS) $(OPTS) delsparse.f90 -o delsparse.o
 
-slatec.o : slatec.f
-	$(FORT) $(CFLAGS) $(OPTS) $(LEGACY) slatec.f -o slatec.o
-
-lapack.o : lapack.f
-	$(FORT) $(CFLAGS) $(OPTS) lapack.f -o lapack.o
-
-blas.o : blas.f
-	$(FORT) $(CFLAGS) $(OPTS) blas.f -o blas.o
+dependencies/slatec.o : dependencies/slatec.f
+	cd dependencies && $(FORT) $(CFLAGS) $(OPTS) $(LEGACY) slatec.f -o slatec.o
 
 clean:
 	rm -f *.o *.mod test_install

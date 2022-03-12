@@ -7,7 +7,7 @@ C            equality and inequality constraints, and optionally compute
 C            a covariance matrix.
 C***LIBRARY   SLATEC
 C***CATEGORY  K1A2A, D9
-C***TYPE      REAL(KIND=R8) (LSEI-S, DLSEI-D)
+C***TYPE      DOUBLE PRECISION (LSEI-S, DLSEI-D)
 C***KEYWORDS  CONSTRAINED LEAST SQUARES, CURVE FITTING, DATA FITTING,
 C             EQUALITY CONSTRAINTS, INEQUALITY CONSTRAINTS,
 C             QUADRATIC PROGRAMMING
@@ -62,7 +62,7 @@ C     dimension required for that problem.
 C
 C     The parameters for DLSEI( ) are
 C
-C     Input.. All TYPE REAL variables are REAL(KIND=R8)
+C     Input.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     W(*,*),MDW,   The array W(*,*) is doubly subscripted with
 C     ME,MA,MG,N    first dimensioning parameter equal to MDW.
@@ -268,7 +268,7 @@ C
 C                  LIP = MG+2*N+2
 C                  This test will not be made if IP(2).LE.0.
 C
-C     Output.. All TYPE REAL variables are REAL(KIND=R8)
+C     Output.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     X(*),RNORME,  The array X(*) contains the solution parameters
 C     RNORML        if the integer output flag MODE = 0 or 1.
@@ -382,18 +382,17 @@ C   900315  CALLs to XERROR changed to CALLs to XERMSG.  (THJ)
 C   900510  Convert XERRWV calls to XERMSG calls.  (RWC)
 C   900604  DP version created from SP version.  (RWC)
 C   920501  Reformatted the REFERENCES section.  (WRB)
-C   180613  Removed prints and replaced DP --> REAL(KIND=R8). (THC)
+C   180613  Removed prints and replaced DP --> DOUBLE PRECISION. (THC)
 C***END PROLOGUE  DLSEI
-      USE REAL_PRECISION
 
       INTEGER IP(3), MA, MDW, ME, MG, MODE, N
-      REAL(KIND=R8) PRGOPT(*), RNORME, RNORML, W(MDW,*), WS(*), X(*)
+      DOUBLE PRECISION PRGOPT(*), RNORME, RNORML, W(MDW,*), WS(*), X(*)
 C
       EXTERNAL D1MACH, DASUM, DAXPY, DCOPY, DDOT, DH12, DLSI, DNRM2,
      *   DSCAL, DSWAP
-      REAL(KIND=R8) D1MACH, DASUM, DDOT, DNRM2
+      DOUBLE PRECISION D1MACH, DASUM, DDOT, DNRM2
 C
-      REAL(KIND=R8) DRELPR, ENORM, FNORM, GAM, RB, RN, RNMAX, SIZE,
+      DOUBLE PRECISION DRELPR, ENORM, FNORM, GAM, RB, RN, RNMAX, SIZE,
      *   SN, SNMAX, T, TAU, UJ, UP, VJ, XNORM, XNRME
       INTEGER I, IMAX, J, JP1, K, KEY, KRANKE, LAST, LCHK, LINK, M,
      *   MAPKE1, MDEQC, MEND, MEP1, N1, N2, NEXT, NLINK, NOPT, NP1,
@@ -743,7 +742,7 @@ C***BEGIN PROLOGUE  DLSI
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to DLSEI
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (LSI-S, DLSI-D)
+C***TYPE      DOUBLE PRECISION (LSI-S, DLSI-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C***DESCRIPTION
 C
@@ -795,16 +794,15 @@ C   900328  Added TYPE section.  (WRB)
 C   900604  DP version created from SP version.  (RWC)
 C   920422  Changed CALL to DHFTI to include variable MA.  (WRB)
 C***END PROLOGUE  DLSI
-      USE REAL_PRECISION
 
       INTEGER IP(*), MA, MDW, MG, MODE, N
-      REAL(KIND=R8) PRGOPT(*), RNORM, W(MDW,*), WS(*), X(*)
+      DOUBLE PRECISION PRGOPT(*), RNORM, W(MDW,*), WS(*), X(*)
 C
       EXTERNAL D1MACH, DASUM, DAXPY, DCOPY, DDOT, DH12, DHFTI, DLPDP,
      *   DSCAL, DSWAP
-      REAL(KIND=R8) D1MACH, DASUM, DDOT
+      DOUBLE PRECISION D1MACH, DASUM, DDOT
 C
-      REAL(KIND=R8) ANORM, DRELPR, FAC, GAM, RB, TAU, TOL, XNORM,
+      DOUBLE PRECISION ANORM, DRELPR, FAC, GAM, RB, TAU, TOL, XNORM,
      *   TMP_NORM(1)
       INTEGER I, J, K, KEY, KRANK, KRM1, KRP1, L, LAST, LINK, M, MAP1,
      *   MDLPDP, MINMAN, N1, N2, N3, NEXT, NP1
@@ -1079,12 +1077,12 @@ C
       RETURN
       END
 *DECK D1MACH
-      REAL(KIND=R8) FUNCTION D1MACH (I)
+      DOUBLE PRECISION FUNCTION D1MACH (I)
 C***BEGIN PROLOGUE  D1MACH
 C***PURPOSE  Return floating point machine dependent constants.
 C***LIBRARY   SLATEC
 C***CATEGORY  R1
-C***TYPE      REAL(KIND=R8) (R1MACH-S, D1MACH-D)
+C***TYPE      DOUBLE PRECISION (R1MACH-S, D1MACH-D)
 C***KEYWORDS  MACHINE CONSTANTS
 C***AUTHOR  Fox, P. A., (Bell Labs)
 C           Hall, A. D., (Bell Labs)
@@ -1151,7 +1149,6 @@ C   010817  Elevated IEEE to highest importance; see next set of
 C           comments below.  (DWL)
 C***END PROLOGUE  D1MACH
 C
-      USE REAL_PRECISION
 
       INTEGER SMALL(4)
       INTEGER LARGE(4)
@@ -1164,7 +1161,7 @@ C DMACH(1), DMACH(3) and DMACH(4) are slight upper bounds.  The value
 C for DMACH(2) is a slight lower bound.  The value for DMACH(5) is
 C a 20-digit approximation.  If one of the sets of initial data below
 C is preferred, do the necessary commenting and uncommenting. (DWL)
-      REAL(KIND=R8) DMACH(5)
+      DOUBLE PRECISION DMACH(5)
       DATA DMACH / 2.23D-308, 1.79D+308, 1.111D-16, 2.222D-16,
      1             0.30102999566398119521D0 /
       SAVE DMACH
@@ -1387,7 +1384,7 @@ C     DATA DIVER(1), DIVER(2) / Z00003CD0, Z00000000 /
 C     DATA LOG10(1), LOG10(2) / Z44133FF3, Z79FF509F /
 C
 C     MACHINE CONSTANTS FOR THE ELXSI 6400
-C     (ASSUMING REAL*8 IS THE DEFAULT REAL(KIND=R8))
+C     (ASSUMING REAL*8 IS THE DEFAULT DOUBLE PRECISION)
 C
 C     DATA SMALL(1), SMALL(2) / '00100000'X,'00000000'X /
 C     DATA LARGE(1), LARGE(2) / '7FEFFFFF'X,'FFFFFFFF'X /
@@ -1420,7 +1417,7 @@ C     DATA DMACH(4) / Z'3CB0000000000000' /
 C     DATA DMACH(5) / Z'3FD34413509F79FF' /
 C
 C     MACHINE CONSTANTS FOR THE HP 2100
-C     THREE WORD REAL(KIND=R8) OPTION WITH FTN4
+C     THREE WORD DOUBLE PRECISION OPTION WITH FTN4
 C
 C     DATA SMALL(1), SMALL(2), SMALL(3) / 40000B,       0,       1 /
 C     DATA LARGE(1), LARGE(2), LARGE(3) / 77777B, 177777B, 177776B /
@@ -1429,7 +1426,7 @@ C     DATA DIVER(1), DIVER(2), DIVER(3) / 40000B,       0,    276B /
 C     DATA LOG10(1), LOG10(2), LOG10(3) / 46420B,  46502B,  77777B /
 C
 C     MACHINE CONSTANTS FOR THE HP 2100
-C     FOUR WORD REAL(KIND=R8) OPTION WITH FTN4
+C     FOUR WORD DOUBLE PRECISION OPTION WITH FTN4
 C
 C     DATA SMALL(1), SMALL(2) /  40000B,       0 /
 C     DATA SMALL(3), SMALL(4) /       0,       1 /
@@ -1461,7 +1458,7 @@ C     DATA DIVER(1), DIVER(2) / Z34100000, Z00000000 /
 C     DATA LOG10(1), LOG10(2) / Z41134413, Z509F79FF /
 C
 C     MACHINE CONSTANTS FOR THE IBM PC
-C     ASSUMES THAT ALL ARITHMETIC IS DONE IN REAL(KIND=R8)
+C     ASSUMES THAT ALL ARITHMETIC IS DONE IN DOUBLE PRECISION
 C     ON 8088, I.E., NOT IN 80 BIT FORM FOR THE 8087.
 C
 C     DATA SMALL(1) / 2.23D-308  /
@@ -2176,7 +2173,7 @@ C     DATA IMACH(15) /      -1021 /
 C     DATA IMACH(16) /       1024 /
 C
 C     MACHINE CONSTANTS FOR THE HP 2100
-C     3 WORD REAL(KIND=R8) OPTION WITH FTN4
+C     3 WORD DOUBLE PRECISION OPTION WITH FTN4
 C
 C     DATA IMACH( 1) /          5 /
 C     DATA IMACH( 2) /          6 /
@@ -2196,7 +2193,7 @@ C     DATA IMACH(15) /       -128 /
 C     DATA IMACH(16) /        127 /
 C
 C     MACHINE CONSTANTS FOR THE HP 2100
-C     4 WORD REAL(KIND=R8) OPTION WITH FTN4
+C     4 WORD DOUBLE PRECISION OPTION WITH FTN4
 C
 C     DATA IMACH( 1) /          5 /
 C     DATA IMACH( 2) /          6 /
@@ -2507,11 +2504,11 @@ C***BEGIN PROLOGUE  DH12
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to DHFTI, DLSEI and DWNNLS
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (H12-S, DH12-D)
+C***TYPE      DOUBLE PRECISION (H12-S, DH12-D)
 C***AUTHOR  (UNKNOWN)
 C***DESCRIPTION
 C
-C      *** REAL(KIND=R8) VERSION OF H12 ******
+C      *** DOUBLE PRECISION VERSION OF H12 ******
 C
 C     C.L.Lawson and R.J.Hanson, Jet Propulsion Laboratory, 1973 Jun 12
 C     to appear in 'Solving Least Squares Problems', Prentice-Hall, 1974
@@ -2548,13 +2545,12 @@ C   890531  Changed all specific intrinsics to generic.  (WRB)
 C   890831  Modified array declarations.  (WRB)
 C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   900328  Added TYPE section.  (WRB)
-C   900911  Added DDOT to REAL(KIND=R8) statement.  (WRB)
+C   900911  Added DDOT to DOUBLE PRECISION statement.  (WRB)
 C***END PROLOGUE  DH12
-      USE REAL_PRECISION
 
       INTEGER I, I2, I3, I4, ICE, ICV, INCR, IUE, J, KL1, KL2, KLP,
      *     L1, L1M1, LPIVOT, M, MML1P2, MODE, NCV
-      REAL(KIND=R8) B, C, CL, CLINV, ONE, UL1M1, SM, U, UP, DDOT
+      DOUBLE PRECISION B, C, CL, CLINV, ONE, UL1M1, SM, U, UP, DDOT
       DIMENSION U(IUE,*), C(*)
 C     BEGIN BLOCK PERMITTING ...EXITS TO 140
 C***FIRST EXECUTABLE STATEMENT  DH12
@@ -2654,7 +2650,7 @@ C            sequential accumulation of rows of the data matrix.
 C            Exactly one right-hand side vector is permitted.
 C***LIBRARY   SLATEC
 C***CATEGORY  D9
-C***TYPE      REAL(KIND=R8) (HFTI-S, DHFTI-D)
+C***TYPE      DOUBLE PRECISION (HFTI-S, DHFTI-D)
 C***KEYWORDS  CURVE FITTING, LEAST SQUARES
 C***AUTHOR  Lawson, C. L., (JPL)
 C           Hanson, R. J., (SNLA)
@@ -2711,7 +2707,7 @@ C     space.
 C
 C     The entire set of parameters for DHFTI are
 C
-C     INPUT.. All TYPE REAL variables are REAL(KIND=R8)
+C     INPUT.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     A(*,*),MDA,M,N    The array A(*,*) initially contains the M by N
 C                       matrix A of the least squares problem AX = B.
@@ -2742,7 +2738,7 @@ C                       for pseudorank determination.
 C
 C     H(*),G(*),IP(*)   Arrays of working space used by DHFTI.
 C
-C     OUTPUT.. All TYPE REAL variables are REAL(KIND=R8)
+C     OUTPUT.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     A(*,*)            The contents of the array A(*,*) will be
 C                       modified by the subroutine. These contents
@@ -2782,11 +2778,10 @@ C   900315  CALLs to XERROR changed to CALLs to XERMSG.  (THJ)
 C   901005  Replace usage of DDIFF with usage of D1MACH.  (RWC)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C***END PROLOGUE  DHFTI
-      USE REAL_PRECISION
 
       INTEGER I, II, IOPT, IP(*), IP1, J, JB, JJ, K, KP1, KRANK, L,
      *     LDIAG, LMAX, M, MDA, MDB, N, NB, NERR
-      REAL(KIND=R8) A, B, D1MACH, DZERO, FACTOR,
+      DOUBLE PRECISION A, B, D1MACH, DZERO, FACTOR,
      *     G, H, HMAX, RELEPS, RNORM, SM, SM1, SZERO, TAU, TMP
       DIMENSION A(MDA,*),B(MDB,*),H(*),G(*),RNORM(*)
       SAVE RELEPS
@@ -2985,7 +2980,7 @@ C***BEGIN PROLOGUE  DLPDP
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to DLSEI
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (LPDP-S, DLPDP-D)
+C***TYPE      DOUBLE PRECISION (LPDP-S, DLPDP-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -3028,12 +3023,11 @@ C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   900328  Added TYPE section.  (WRB)
 C   910408  Updated the AUTHOR section.  (WRB)
 C***END PROLOGUE  DLPDP
-      USE REAL_PRECISION
 
 C
       INTEGER I, IS(*), IW, IX, J, L, M, MDA, MODE, MODEW, N, N1, N2,
      *     NP1
-      REAL(KIND=R8) A(MDA,*), DDOT, DNRM2, FAC, ONE,
+      DOUBLE PRECISION A(MDA,*), DDOT, DNRM2, FAC, ONE,
      *     PRGOPT(*), RNORM, SC, WNORM, WS(*), X(*), YNORM, ZERO
       SAVE ZERO, ONE, FAC
       DATA ZERO,ONE /0.0D0,1.0D0/, FAC /0.1D0/
@@ -3197,7 +3191,7 @@ C            equality constraints and nonnegativity constraints on
 C            selected variables.
 C***LIBRARY   SLATEC
 C***CATEGORY  K1A2A
-C***TYPE      REAL(KIND=R8) (WNNLS-S, DWNNLS-D)
+C***TYPE      DOUBLE PRECISION (WNNLS-S, DWNNLS-D)
 C***KEYWORDS  CONSTRAINED LEAST SQUARES, CURVE FITTING, DATA FITTING,
 C             EQUALITY CONSTRAINTS, INEQUALITY CONSTRAINTS,
 C             NONNEGATIVITY CONSTRAINTS, QUADRATIC PROGRAMMING
@@ -3232,7 +3226,7 @@ C     The subprogram chooses the heavy weight (or penalty parameter) WT.
 C
 C     The parameters for DWNNLS are
 C
-C     INPUT.. All TYPE REAL variables are REAL(KIND=R8)
+C     INPUT.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     W(*,*),MDW,  The array W(*,*) is double subscripted with first
 C     ME,MA,N,L    dimensioning parameter equal to MDW.  For this
@@ -3392,7 +3386,7 @@ C
 C                  LIW = ME+MA+N
 C                  This test will not be made if IWORK(2).LE.0.
 C
-C     OUTPUT.. All TYPE REAL variables are REAL(KIND=R8)
+C     OUTPUT.. All TYPE REAL variables are DOUBLE PRECISION
 C
 C     X(*)         An array dimensioned at least N, which will
 C                  contain the N components of the solution vector
@@ -3455,13 +3449,12 @@ C   900315  CALLs to XERROR changed to CALLs to XERMSG.  (THJ)
 C   900510  Convert XERRWV calls to XERMSG calls, change Prologue
 C           comments to agree with WNNLS.  (RWC)
 C   920501  Reformatted the REFERENCES section.  (WRB)
-C   180613  Removed prints and replaced DP --> REAL(KIND=R8). (THC)
+C   180613  Removed prints and replaced DP --> DOUBLE PRECISION. (THC)
 C***END PROLOGUE  DWNNLS
-      USE REAL_PRECISION
 
       INTEGER IWORK(*), L, L1, L2, L3, L4, L5, LIW, LW, MA, MDW, ME,
      *     MODE, N
-      REAL(KIND=R8)  PRGOPT(*), RNORM, W(MDW,*), WORK(*), X(*)
+      DOUBLE PRECISION  PRGOPT(*), RNORM, W(MDW,*), WORK(*), X(*)
 C      CHARACTER*8 XERN1
 C***FIRST EXECUTABLE STATEMENT  DWNNLS
       MODE = 0
@@ -3525,7 +3518,7 @@ C***BEGIN PROLOGUE  DWNLSM
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to DWNNLS
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (WNLSM-S, DWNLSM-D)
+C***TYPE      DOUBLE PRECISION (WNLSM-S, DWNLSM-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -3539,7 +3532,7 @@ C     subroutine DWNLSM  (they are passed through the calling
 C     sequence from DWNNLS for purposes of variable dimensioning).
 C     Their contents will in general be of no interest to the user.
 C
-C     Variables of type REAL are REAL(KIND=R8).
+C     Variables of type REAL are DOUBLE PRECISION.
 C
 C         IPIVOT(*)
 C            An array of length N.  Upon completion it contains the
@@ -3590,18 +3583,17 @@ C   900510  Fixed an error message.  (RWC)
 C   900604  DP version created from SP version.  (RWC)
 C   900911  Restriction on value of ALAMDA included.  (WRB)
 C***END PROLOGUE  DWNLSM
-      USE REAL_PRECISION
 
       INTEGER IPIVOT(*), ITYPE(*), L, MA, MDW, MME, MODE, N
-      REAL(KIND=R8) D(*), H(*), PRGOPT(*), RNORM, SCALE(*), TEMP(*),
+      DOUBLE PRECISION D(*), H(*), PRGOPT(*), RNORM, SCALE(*), TEMP(*),
      *   W(MDW,*), WD(*), X(*), Z(*)
 C
       EXTERNAL D1MACH, DASUM, DAXPY, DCOPY, DH12, DNRM2, SLATEC_DROTM,
      *   SLATEC_DROTMG, DSCAL, DSWAP, DWNLIT, IDAMAX, XERMSG
-      REAL(KIND=R8) D1MACH, DASUM, DNRM2
+      DOUBLE PRECISION D1MACH, DASUM, DNRM2
       INTEGER IDAMAX
 C
-      REAL(KIND=R8) ALAMDA, ALPHA, ALSQ, AMAX, BLOWUP, BNORM,
+      DOUBLE PRECISION ALAMDA, ALPHA, ALSQ, AMAX, BLOWUP, BNORM,
      *   DOPE(3), DRELPR, EANORM, FAC, SM, SPARAM(5), T, TAU, WMAX, Z2,
      *   ZZ
       INTEGER I, IDOPE(3), IMAX, ISOL, ITEMP, ITER, ITMAX, IWMAX, J,
@@ -4177,7 +4169,7 @@ C***BEGIN PROLOGUE  SLATEC_DROTM
 C***PURPOSE  Apply a modified Givens transformation.
 C***LIBRARY   SLATEC (BLAS)
 C***CATEGORY  D1A8
-C***TYPE      REAL(KIND=R8) (SROTM-S, DROTM-D)
+C***TYPE      DOUBLE PRECISION (SROTM-S, DROTM-D)
 C***KEYWORDS  BLAS, LINEAR ALGEBRA, MODIFIED GIVENS ROTATION, VECTOR
 C***AUTHOR  Lawson, C. L., (JPL)
 C           Hanson, R. J., (SNLA)
@@ -4231,9 +4223,8 @@ C   920310  Corrected definition of LX in DESCRIPTION.  (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C   180613  Renamed SLATEC_DROTM to avoid BLAS naming conflict. (THC)
 C***END PROLOGUE  SLATEC_DROTM
-      USE REAL_PRECISION
 
-      REAL(KIND=R8) DFLAG, DH12, DH22, DX, TWO, Z, DH11, DH21,
+      DOUBLE PRECISION DFLAG, DH12, DH22, DX, TWO, Z, DH11, DH21,
      1                 DPARAM, DY, W, ZERO
       DIMENSION DX(*), DY(*), DPARAM(5)
       SAVE ZERO, TWO
@@ -4346,7 +4337,7 @@ C***BEGIN PROLOGUE  SLATEC_DROTMG
 C***PURPOSE  Construct a modified Givens transformation.
 C***LIBRARY   SLATEC (BLAS)
 C***CATEGORY  D1B10
-C***TYPE      REAL(KIND=R8) (SROTMG-S, DROTMG-D)
+C***TYPE      DOUBLE PRECISION (SROTMG-S, DROTMG-D)
 C***KEYWORDS  BLAS, LINEAR ALGEBRA, MODIFIED GIVENS ROTATION, VECTOR
 C***AUTHOR  Lawson, C. L., (JPL)
 C           Hanson, R. J., (SNLA)
@@ -4400,9 +4391,8 @@ C   920316  Prologue corrected.  (WRB)
 C   920501  Reformatted the REFERENCES section.  (WRB)
 C   180613  Renamed SLATEC_DROTMG to avoid BLAS naming conflict. (THC)
 C***END PROLOGUE  SLATEC_DROTMG
-      USE REAL_PRECISION
 
-      REAL(KIND=R8) GAM, ONE, RGAMSQ, DD1, DD2, DH11, DH12, DH21,
+      DOUBLE PRECISION GAM, ONE, RGAMSQ, DD1, DD2, DH11, DH12, DH21,
      1                 DH22, DPARAM, DP1, DP2, DQ1, DQ2, DU, DY1, ZERO,
      2                 GAMSQ, DFLAG, DTEMP, DX1, TWO
       DIMENSION DPARAM(5)
@@ -4579,7 +4569,7 @@ C***BEGIN PROLOGUE  DWNLIT
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to DWNNLS
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (WNLIT-S, DWNLIT-D)
+C***TYPE      DOUBLE PRECISION (WNLIT-S, DWNLIT-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -4605,10 +4595,9 @@ C   891214  Prologue converted to Version 4.0 format.  (BAB)
 C   900328  Added TYPE section.  (WRB)
 C   900604  DP version created from SP version. .  (RWC)
 C***END PROLOGUE  DWNLIT
-      USE REAL_PRECISION
 
       INTEGER IDOPE(*), IPIVOT(*), ITYPE(*), L, M, MDW, N
-      REAL(KIND=R8) DOPE(*), H(*), RNORM, SCALE(*), W(MDW,*)
+      DOUBLE PRECISION DOPE(*), H(*), RNORM, SCALE(*), W(MDW,*)
       LOGICAL DONE
 C
       EXTERNAL DCOPY, DH12, SLATEC_DROTM, SLATEC_DROTMG, DSCAL, DSWAP,
@@ -4616,7 +4605,7 @@ C
       INTEGER IDAMAX
       LOGICAL DWNLT2
 C
-      REAL(KIND=R8) ALSQ, AMAX, EANORM, FACTOR, HBAR, RN, SPARAM(5),
+      DOUBLE PRECISION ALSQ, AMAX, EANORM, FACTOR, HBAR, RN, SPARAM(5),
      *   T, TAU
       INTEGER I, I1, IMAX, IR, J, J1, JJ, JP, KRANK, L1, LB, LEND, ME,
      *   MEND, NIV, NSOLN
@@ -4869,7 +4858,7 @@ C***BEGIN PROLOGUE  DWNLT1
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to WNLIT
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (WNLT1-S, DWNLT1-D)
+C***TYPE      DOUBLE PRECISION (WNLT1-S, DWNLT1-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -4885,10 +4874,9 @@ C   790701  DATE WRITTEN
 C   890620  Code extracted from WNLIT and made a subroutine.  (RWC))
 C   900604  DP version created from SP version.  (RWC)
 C***END PROLOGUE  DWNLT1
-      USE REAL_PRECISION
 
       INTEGER I, IMAX, IR, LEND, MDW, MEND
-      REAL(KIND=R8) H(*), HBAR, SCALE(*), W(MDW,*)
+      DOUBLE PRECISION H(*), HBAR, SCALE(*), W(MDW,*)
       LOGICAL RECALC
 C
       EXTERNAL IDAMAX
@@ -4934,7 +4922,7 @@ C***BEGIN PROLOGUE  DWNLT2
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to WNLIT
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (WNLT2-S, DWNLT2-D)
+C***TYPE      DOUBLE PRECISION (WNLT2-S, DWNLT2-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -4964,12 +4952,11 @@ C   790701  DATE WRITTEN
 C   890620  Code extracted from WNLIT and made a subroutine.  (RWC))
 C   900604  DP version created from SP version.  (RWC)
 C***END PROLOGUE  DWNLT2
-      USE REAL_PRECISION
 
-      REAL(KIND=R8) FACTOR, SCALE(*), TAU, WIC(*)
+      DOUBLE PRECISION FACTOR, SCALE(*), TAU, WIC(*)
       INTEGER IR, ME, MEND
 C
-      REAL(KIND=R8) RN, SN, T
+      DOUBLE PRECISION RN, SN, T
       INTEGER J
 C
 C***FIRST EXECUTABLE STATEMENT  DWNLT2
@@ -4995,7 +4982,7 @@ C***BEGIN PROLOGUE  DWNLT3
 C***SUBSIDIARY
 C***PURPOSE  Subsidiary to WNLIT
 C***LIBRARY   SLATEC
-C***TYPE      REAL(KIND=R8) (WNLT3-S, DWNLT3-D)
+C***TYPE      DOUBLE PRECISION (WNLT3-S, DWNLT3-D)
 C***AUTHOR  Hanson, R. J., (SNLA)
 C           Haskell, K. H., (SNLA)
 C***DESCRIPTION
@@ -5011,14 +4998,13 @@ C   790701  DATE WRITTEN
 C   890620  Code extracted from WNLIT and made a subroutine.  (RWC))
 C   900604  DP version created from SP version.  (RWC)
 C***END PROLOGUE  DWNLT3
-      USE REAL_PRECISION
 
       INTEGER I, IMAX, IPIVOT(*), M, MDW
-      REAL(KIND=R8) H(*), W(MDW,*)
+      DOUBLE PRECISION H(*), W(MDW,*)
 C
       EXTERNAL DSWAP
 C
-      REAL(KIND=R8) T
+      DOUBLE PRECISION T
       INTEGER ITEMP
 C
 C***FIRST EXECUTABLE STATEMENT  DWNLT3
