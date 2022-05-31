@@ -54,6 +54,7 @@ The physical organization is as follows.
    A test file `test_install.c` can be used for usage examples. This
    directory's internal README also contains best practices when calling
    Fortran from C/C++.
+ * `docs` contains the html source for generating the DelaunaySparse website.
  * `USAGE` provides additional detailed user information.
  * DelaunaySparse is shared under the MIT Software License, in the `LICENSE`
    file.

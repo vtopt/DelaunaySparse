@@ -1,4 +1,4 @@
-# Usage Information for using DELAUNAYSPARSE.
+# Usage Information for DELAUNAYSPARSE.
 
 DELAUNAYSPARSE solves the multivariate interpolation problem:
 

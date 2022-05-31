@@ -1,0 +1,872 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+<meta name="description" content="DELAUNAYSPARSE" />
+<meta name="keywords" content="DELAUNAYSPARSE, interpolation, Delaunay triangulation, Delaunay interpolation, mathematical software, TOMS Algorithm" />
+<link rel="stylesheet" type="text/css" href="body.css" title="DELAUNAYSPARSE" media="screen,projection" />
+<title>DELAUNAYSPARSE</title>
+</head>
+
+<body>
+<div id="wrap">
+
+<div id="header">
+<p id="toplinks"></p>
+<h1>DELAUNAYSPARSE</h1>
+<p id="slogan">DELAUNAYSPARSE -- Interpolation via the Delaunay Triangulation</p>
+</div>
+
+<div id="content">
+<h2>Overview</h2>
+<p>
+The package
+<strong><a href="index.html"><span class="green">DELAUNAYSPARSE</span></a></strong>
+(ACM TOMS Algorithm 1012) contains serial and parallel codes, written in
+<code>FORTRAN 2003</code> with <code>OpenMP 4.5</code>, for performing
+interpolation in medium to high dimensions via a sparse subset of the
+Delaunay triangulation.
+In addition to the original <code>FORTRAN</code> source code, this site can
+be used to download a <code>Python 3.6+</code> wrapper and <code>C/C++</code>
+bindings for DELAUNAYSPARSE.
+Note that each of the three downloads is self-contained, with the
+<code>Python</code> wrapper and <code>C</code> bindings each containing
+a subset of the <code>FORTRAN</code> as is needed to build and run
+their respective functionalities.
+Command line drivers, which accept formatted data files, are also available
+by downloading the original <code>FORTRAN</code> source code.
+</p>
+<p>
+The serial driver subroutine is <code>DELAUNAYSPARSES</code>
+and the parallel driver subroutine is <code>DELAUNAYSPARSEP</code>.
+The subroutines <code>DELAUNAYSPARSE{S|P}</code> use the module
+<code>REAL_PRECISION</code> from <code>HOMPACK90</code>
+(ACM TOMS Algorithm 777) for specifying the real data type,
+and the subroutine <code>DWNNLS</code> from <code>SLATEC</code>
+to compute projections onto the convex hull during extrapolation.
+The master module <code>DELSPARSE_MOD</code> includes the
+<code>REAL_PRECISION</code> module and interface blocks for both 
+<code>DELAUNAYSPARSES</code> and <code>DELAUNAYSPARSEP</code>, as well as
+an interface block for the updated <code>SLATEC</code> subroutine
+<code>DWNNLS</code>, which may be of separate interest.
+Comments at the beginning of the driver subroutines
+<code>DELAUNAYSPARSE{S|P}</code> document the arguments and usage,
+and examples demonstrating their usage are provided in the
+sample programs <code>samples.f90</code> and <code>samplep.f90</code>.
+</p>
+<p>
+The physical organization of the main
+<a href="delsparse.zip">TOMS source download</a> into files is as follows.
+Further details on using the <a href="py_delsparse.zip">Python wrapper</a>
+and <a href="c_delsparse.zip">C bindings</a> downloads are given in their
+respective <code>README</code> files, which are included in the downloads.
+
+<ul>
+ <li> The file <code>delsparse.f90</code> contains the module
+   <code>REAL_PRECISION</code>, <code>DELSPARSE_MOD</code>, and
+   the driver subroutines <code>DELAUNAYSPARSES</code>, and
+   <code>DELAUNAYSPARSEP</code>.</li>
+ <li> The file <code>slatec.f</code> contains the subroutine
+   <code>DWNNLS</code> and its dependencies from the <code>SLATEC</code>
+   library. This library has been slightly modified to
+   comply with the modern Fortran standards. Additionally, legacy
+   implementations of the <code>BLAS</code> subroutines <code>DROTM</code>
+   and <code>DTROMG</code> have been included under different names to
+   avoid dependency issues. Depending on your compiler, you may still
+   receive warnings related to obsolete features.</li>
+ <li> The file <code>samples.f90</code> contains a sample command line program
+   demonstrating the usage of <code>DELAUNAYSPARSES</code>, with optional
+   arguments. This program can also be used to use <code>DELAUNAYSPARSES</code>
+   on formatted data files from the command line.</li>
+ <li> The file <code>samplep.f90</code> contains a sample command line program
+   demonstrating the usage of <code>DELAUNAYSPARSEP</code>, with optional
+   arguments. This program can also be used to use <code>DELAUNAYSPARSEP</code>
+   on formatted data files from the command line.</li>
+ <li> The file <code>test_install.f90</code> contains a simple test program
+   that checks whether the installation of DELAUNAYSPARSE appears correct,
+   based on the output to a small interpolation/extrapolation problem.</li>
+ <li> The file <code>sample_input2d.dat</code> contains a sample 2-dimensional
+   input data set for <code>samples.f90</code> and <code>samplep.f90</code>,
+   coming from the
+   <a href="https://varsys.cs.vt.edu/">VarSys project at Virginia Tech</a>.</li>
+ <li> The file <code>sample_input4d.dat</code> contains a sample 4-dimensional
+   input data set for <code>samples.f90</code> and <code>samplep.f90</code>,
+   coming from the
+   <a href="https://varsys.cs.vt.edu/">VarSys project at Virginia Tech</a>.</li>
+ <li> The files <code>lapack.f</code> and <code>blas.f</code> contain all
+   <code>LAPACK</code> and <code>BLAS</code>
+   subroutines that are referenced (both directly and indirectly) in
+   DELAUNAYSPARSE.</li>
+ <li> A sample GNU <code>Makefile</code> is provided.
+</ul>
+</p>
+
+<p>
+To check that the installation of <code>DELAUNAYSPARSES</code> and
+<code>DELAUNAYSPARSEP</code> is correct, assuming that your Fortran compiler
+allows mixing fixed format <code>.f</code> and free format <code>.f90</code>
+files in the same compile command, use the command
+</p>
+
+<pre>
+$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f test_install.f90 \
+  -o test_install $LIBS
+</pre>
+
+<p>
+where <code>$FORT</code> is a <code>FORTRAN 2003</code> compliant compiler
+supporting <code>OpenMP 4.5</code>, <code>$OPTS</code> is a list of compiler
+options, and <code>$LIBS</code> is a list of flags to link the
+<code>BLAS</code> and <code>LAPACK</code> libraries, if those exist on your
+system (in which case the files <code>blas.f</code> and <code>lapack.f</code>
+can be omitted from the compile command). To run the parallel code,
+<code>$OPTS</code> must include the compiler option for <code>OpenMP</code>.
+</p>
+
+<p>
+Then run the tests using
+</p>
+
+<pre>
+./test_install
+</pre>
+
+<p>
+To compile and link the sample main programs <code>sample{s|p}.f90</code>, use
+</p>
+
+<pre>
+$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f sample{s|p}.f90 \
+  -o sample{s|p} $LIBS
+</pre>
+
+<p>
+similar to above.  To run a sample main program, use
+</p>
+
+<pre>
+./sample{s|p} sample_input{2|4}d.dat
+</pre>
+
+<p>
+where <code>sample_input{2|4}d.dat</code> could be replaced by any other
+similarly formatted data file.
+</p>
+
+
+<h2>Usage Information for DELAUNAYSPARSE</h2>
+
+<p>
+DELAUNAYSPARSE solves the multivariate interpolation problem:
+<p>
+<p>
+Given a set of <code>N</code> points <code>PTS</code> and a set of <code>M</code>
+interpolation points <code>Q</code> in <code>R^D</code>, for each interpolation
+point <code>Q_i</code> in <code>Q</code>, identify the set
+of <code>D+1</code> data points in <code>PTS</code> that are the vertices of a
+Delaunay simplex containing <code>Q_i</code>.
+</p>
+<p>
+These vertices can be used to calculate the Delaunay interpolant using
+a piecewise linear model.
+</p>
+<p>
+For more information on the underlying algorithm, see
+<pre>
+    @inproceedings{algorithm,
+        author={Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and
+                Li, Bo and Xu, Li and Butt, Ali R. and Cameron, Kirk W. and
+                Hong, Yili},
+        title={A polynomial time algorithm for multivariate interpolation in
+               arbitrary dimension via the {D}elaunay triangulation},
+        year={2018},
+        month={mar},
+        booktitle={Proc. ACMSE 2018 Conference (ACMSE 18)},
+        publisher={ACM},
+        location={Richmond, KY},
+        doi={10.1145/3190645.3190680}
+    }
+</pre>
+</p>
+<p>
+For more information on this software, see
+<pre>
+    @article{toms1012,
+        author={Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H.
+                and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
+        title={Algorithm 1012: {DELAUNAYSPARSE}: Interpolation via a sparse
+               subset of the {D}elaunay triangulation in medium to high
+               dimensions},
+        year={2020},
+        volume={46},
+        number={4},
+        articleno={38},
+        nopages={20},
+        doi={10.1145/3422818}
+    }
+</pre>
+</p>
+<p>
+DELAUNAYSPARSE contains a Fortran module
+<ul>
+ <li><code>delsparse</code>;</li>
+</ul>
+as well as C bindings
+<ul>
+ <li><code>delsparsec</code>;</li>
+</ul>
+two command-line drivers
+<ul>
+ <li><code>delsparses</code> and</li>
+ <li><code>delsparsep</code>;</li>
+</ul>
+
+and a Python 3 wrapper
+<ul>
+ <li><code>python</code>.</li>
+</ul>
+</p>
+<p>
+These interfaces are described in the following sections.
+</p>
+
+<h3>Fortran interface</h3>
+<p>
+DELAUNAYSPARSE is written in Fortran 2003, and this is its native interface.
+The Fortran interface contains two drivers:
+<ul>
+ <li><code>DELAUNAYSPARSES</code> (serial driver) and</li>
+ <li><code>DELAUNAYSPARSEP</code> (OpenMP parallel driver).</li>
+</ul>
+</p>
+
+<h4>DELAUNAYSPARSES</h4>
+<p>
+The interface for DELAUNAYSPARSES is
+<pre>
+SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,     &
+                            INTERP_IN, INTERP_OUT, EPS, EXTRAP, RNORM, &
+                            IBUDGET, CHAIN, EXACT                      )
+</pre>
+</p>
+<p>
+Each of the above parameters is described below.
+</p>
+<p>
+On input:
+<ul>
+ <li><code>D</code> is the dimension of the space for <code>PTS</code> and 
+     <code>Q</code>.</li>
+ <li><code>N</code> is the number of data points in <code>PTS</code>.</li>
+ <li><code>PTS(1:D,1:N)</code> is a real valued matrix with <code>N</code>
+     columns, each containing the coordinates of a single data point in
+     <code>R^D</code>.</li>
+ <li><code>M</code> is the number of interpolation points in <code>Q</code>.</li>
+ <li><code>Q(1:D,1:M)</code> is a real valued matrix with <code>M</code> columns,
+     each containing the coordinates of a single interpolation point in
+     <code>R^D</code>.</li>
+</ul>
+</p>
+<p>
+On output:
+<ul>
+ <li><code>PTS</code> and <code>Q</code> have been rescaled and shifted.
+     All the data points in <code>PTS</code> are now contained in the unit
+     hyperball in <code>R^D</code>, and the points in <code>Q</code>
+     have been shifted and scaled accordingly in relation to <code>PTS</code>.
+     </li>
+ <li><code>SIMPS(1:D+1,1:M)</code> contains the <code>D+1</code> integer
+     indices (corresponding to columns in <code>PTS</code>) for the
+     <code>D+1</code> vertices of the Delaunay simplex containing each
+     interpolation point in <code>Q</code>.</li>
+ <li><code>WEIGHTS(1:D+1,1:M)</code> contains the <code>D+1</code> real-valued
+     weights for expressing each point in <code>Q</code> as a convex combination
+     of the <code>D+1</code> corresponding vertices in <code>SIMPS</code>.</li>
+ <li><code>IERR(1:M)</code> contains integer valued error flags associated with
+     the computation of each of the <code>M</code> interpolation points in
+     <code>Q</code>. The error codes are:
+     <br><br>
+   Codes 0, 1, 2 are expected to occur during normal execution.
+   <ul>
+    <li> 00 : Succesful interpolation.</li>
+    <li> 01 : Succesful extrapolation (up to the allowed extrapolation
+         distance).</li>
+    <li> 02 : This point was outside the allowed extrapolation distance; the
+         corresponding entries in SIMPS and WEIGHTS contain zero values.</li>
+   </ul>
+    
+    Error codes 10--28 indicate that one or more inputs contain illegal
+    values or are incompatible with each other.
+    <ul>
+    <li> 10 : The dimension <code>D</code> must be positive.</li>
+    <li> 11 : Too few data points to construct a triangulation (i.e., 
+         <code>N < D+1</code>).</li>
+    <li> 12 : No interpolation points given (i.e., <code>M < 1</code>).</li>
+    <li> 13 : The first dimension of <code>PTS</code> does not agree with the
+         dimension <code>D</code>.</li>
+    <li> 14 : The second dimension of <code>PTS</code> does not agree with the
+         number of points <code>N</code>.</li>
+    <li> 15 : The first dimension of <code>Q</code> does not agree with the
+         dimension <code>D</code>.</li>
+    <li> 16 : The second dimension of <code>Q</code> does not agree with the
+         number of interpolation points <code>M</code>.</li>
+    <li> 17 : The first dimension of the output array <code>SIMPS</code> does
+         not match the number of vertices needed for a <code>D</code>-simplex
+         (<code>D+1</code>).</li>
+    <li> 18 : The second dimension of the output array <code>SIMPS</code> does
+         not match the number of interpolation points <code>M</code>.</li>
+    <li> 19 : The first dimension of the output array <code>WEIGHTS</code> does
+         not match the number of vertices for a a <code>D</code>-simplex
+         (<code>D+1</code>).</li>
+    <li> 20 : The second dimension of the output array <code>WEIGHTS</code>
+         does not match the number of interpolation points <code>M</code>.</li>
+    <li> 21 : The size of the error array <code>IERR</code> does not match the
+         number of interpolation points <code>M</code>.</li>
+    <li> 22 : <code>INTERP_IN</code> cannot be present without
+         <code>INTERP_OUT</code> or vice versa.</li>
+    <li> 23 : The first dimension of <code>INTERP_IN</code> does not match the
+         first dimension of <code>INTERP_OUT</code>.</li>
+    <li> 24 : The second dimension of <code>INTERP_IN</code> does not match the
+         number of data points <code>PTS</code>.</li>
+    <li> 25 : The second dimension of <code>INTERP_OUT</code> does not match the
+         number of interpolation points <code>M</code>.</li>
+    <li> 26 : The budget supplied in <code>IBUDGET</code> does not contain a
+         positive integer.</li>
+    <li> 27 : The extrapolation distance supplied in <code>EXTRAP</code> cannot
+         be negative.</li>
+    <li> 28 : The size of the <code>RNORM</code> output array does not match the
+         number of interpolation points <code>M</code>.</li>
+    </ul>
+
+    The errors 30, 31 typically indicate that DELAUNAYSPARSE has been given
+    an unclean dataset. These errors can be fixed by preprocessing your
+    data (remove duplicate points and apply PCA or other dimension reduction
+    technique).
+    <ul>
+    <li> 30 : Two or more points in the data set <code>PTS</code> are too close
+         together with respect to the working precision (<code>EPS</code>),
+         which would result in a numerically degenerate simplex.</li>
+    <li> 31 : All the data points in <code>PTS</code> lie in some lower
+         dimensional linear manifold (up to the working precision), and no valid
+         triangulation exists.</li>
+    </ul>
+
+    The error code 40 occurs when another earlier error prevented this point
+    from ever being evaluated.
+    <ul>
+    <li> 40 : An error caused <code>DELAUNAYSPARSES</code> to terminate before
+         this value could be computed. Note: The corresponding entries in
+         <code>SIMPS</code> and <code>WEIGHTS</code> may contain garbage values.
+         </li>
+    </ul>
+
+    The error code 50 corresponds to allocation of the internal WORK array.
+    Check your systems internal memory settings and limits, in relation
+    to the problem size and DELAUNAYSPARSE's space requirements (see TOMS
+    Alg. paper for more details on DELAUNAYSPARSE's space requirements).
+    <ul>
+    <li> 50 : A memory allocation error occurred while allocating the work array
+         <code>WORK</code>.</li>
+    </ul>
+
+    The errors 60, 61 should not occur with the default settings. If one of
+    these errors is observed, then it is likely that either the value of
+    the optional inputs <code>IBUDGET</code> or <code>EPS</code> has been
+    adjusted in a way that is unwise, or there may be another issue with the
+    problem settings, which is manifesting in an unusual way.
+    <ul>
+    <li> 60 : The budget was exceeded before the algorithm converged on this
+         value. If the dimension is high, try increasing <code>IBUDGET</code>.
+         This error can also be caused by a working precision <code>EPS</code>
+         that is too small for the conditioning of the problem.</li>
+    <li> 61 : A value that was judged appropriate later caused LAPACK to
+         encounter a singularity. Try increasing the value of <code>EPS</code>.
+         </li>
+    </ul>
+
+    The errors 70--72 were caused by the DWNNLS library from SLATEC, which
+    is only used during extrapolation. Note that there is a known issue
+    with this library, when it is linked against included public-domain
+    copy of BLAS/LAPACK, instead of an installed version
+    (i.e., <code>-lblas</code> <code>-llapack</code>).
+    <ul>
+    <li> 70 : Allocation error for the extrapolation work arrays.</li>
+    <li> 71 : The SLATEC subroutine <code>DWNNLS</code> failed to converge
+         during the projection of an extrapolation point onto the convex hull.
+         </li>
+    <li> 72 : The SLATEC subroutine <code>DWNNLS</code> has reported a usage
+         error.</li>
+    </ul>
+
+   The errors 72, 80--83 should never occur, and likely indicate a
+   compiler bug or hardware failure.
+   <ul>
+    <li> 80 : The LAPACK subroutine <code>DGEQP3</code> has reported an illegal
+         value.</li>
+    <li> 81 : The LAPACK subroutine <code>DGETRF</code> has reported an illegal
+         value.</li>
+    <li> 82 : The LAPACK subroutine <code>DGETRS</code> has reported an illegal
+         value.</li>
+    <li> 83 : The LAPACK subroutine <code>DORMQR</code> has reported an illegal
+         value.</li>
+   </ul>
+</ul>
+</p>
+<p>
+Optional arguments:
+<ul>
+ <li> <code>INTERP_IN(1:IR,1:N)</code> contains real valued response vectors for
+      each of the data points in <code>PTS</code> on input. The first dimension
+      of <code>INTERP_IN</code> is inferred to be the dimension of these
+      response vectors, and the second dimension must match <code>N</code>.
+      If present, the response values will be computed for each interpolation
+      point in <code>Q</code>, and stored in <code>INTERP_OUT</code>,
+      which therefore must also be present. If both <code>INTERP_IN</code> and
+      <code>INTERP_OUT</code> are omitted, only the containing simplices and
+      convex combination weights are returned.</li>
+ <li> <code>INTERP_OUT(1:IR,1:M)</code> contains real valued response vectors
+      for each interpolation point in <code>Q</code> on output. The first
+      dimension of <code>INTERP_OUT</code> must match the first dimension of
+      <code>INTERP_IN</code>, and the second dimension must match <code>M</code>.
+      If present, the response values at each interpolation point are computed
+      as a convex combination of the response values (supplied in 
+      <code>INTERP_IN</code>) at the vertices of a Delaunay simplex containing
+      that interpolation point. Therefore, if <code>INTERP_OUT</code> is
+      present, then <code>INTERP_IN</code> must also be present.  If both are
+      omitted, only the simplices and convex combination weights are returned.
+      </li>
+ <li> <code>EPS</code> contains the real working precision for the problem on
+      input. By default, <code>EPS</code> is assigned <code>\sqrt{\mu}</code>
+      where <code>\mu</code> denotes the unit roundoff for the machine. In
+      general, any values that differ by less than <code>EPS</code> are judged
+      as equal, and any weights that are greater than <code>-EPS</code> are
+      judged as nonnegative. <code>EPS</code> cannot take a value less than the
+      default value of <code>\sqrt{\mu}</code>. If any value less than
+      <code>\sqrt{\mu}</code> is supplied, the default value will be used
+      instead automatically.</li>
+ <li> <code>EXTRAP</code> contains the real maximum extrapolation distance
+      (relative to the diameter of <code>PTS</code>) on input. Interpolation
+      at a point outside the convex hull of <code>PTS</code> is done by
+      projecting that point onto the convex hull, and then doing normal
+      Delaunay interpolation at that projection. Interpolation at any point
+      in <code>Q</code> that is more than <code>EXTRAP * DIAMETER(PTS)</code>
+      units outside the convex hull of <code>PTS</code> will not be done and
+      an error code of <code>2</code> will be returned. Note that computing
+      the projection can be expensive. Setting <code>EXTRAP=0</code> will
+      cause all extrapolation points to be ignored without ever computing a
+      projection. By default, <code>EXTRAP=0.1</code>
+      (extrapolate by up to 10% of the diameter of <code>PTS</code>).</li>
+ <li> <code>RNORM(1:M)</code> contains the real unscaled projection (2-norm)
+      distances from any projection computations on output. If not present,
+      these distances are still computed for each extrapolation point, but are
+      never returned.</li>
+ <li> <code>IBUDGET</code> on input contains the integer budget for performing
+      flips while iterating toward the simplex containing each interpolation
+      point in <code>Q</code>. This prevents <code>DELAUNAYSPARSES</code> from
+      falling into an infinite loop when an inappropriate value of
+      <code>EPS</code> is given with respect to the problem conditioning.
+      By default, <code>IBUDGET=50000</code>. However, for extremely
+      high-dimensional problems and pathological inputs, the default value
+      may be insufficient.</li>
+ <li> <code>CHAIN</code> is a logical input argument that determines whether a
+      new first simplex should be constructed for each interpolation point
+      (<code>CHAIN=.FALSE.</code>), or whether the simplex walks should be
+      "daisy-chained." By default, <code>CHAIN=.FALSE.</code> Setting
+      <code>CHAIN=.TRUE.</code> is generally not recommended, unless the size
+      of the triangulation is relatively small or the interpolation points are
+      known to be tightly clustered.</li>
+ <li> <code>EXACT</code> is a logical input argument that determines whether
+      the exact diameter should be computed and whether a check for duplicate
+      data points should be performed in advance. When
+      <code>EXACT=.FALSE.</code>, the diameter of <code>PTS</code> is
+      approximated by twice the distance from the barycenter of <code>PTS</code>
+      to the farthest point in <code>PTS</code>, and no check is done to find
+      the closest pair of points, which could result in hard to find bugs later
+      on. When <code>EXACT=.TRUE.</code>, the exact diameter is computed and
+      an error is returned whenever PTS contains duplicate values up to the
+      precision <code>EPS</code>. By default <code>EXACT=.TRUE.</code>, but
+      setting <code>EXACT=.FALSE.</code> could result in significant speedup
+      when <code>N</code> is large.</li> It is strongly recommended that most
+      users leave <code>EXACT=.TRUE.</code>, as setting
+      <code>EXACT=.FALSE.</code> could result in input errors that are difficult
+      to identify. Also, the diameter approximation could be wrong by up to
+      a factor of two.</li>
+</ul>
+</p>
+<p>
+Subroutines and functions directly referenced from BLAS are
+<ul>
+ <li> <code>DDOT</code>,</li>
+ <li> <code>DGEMV</code>,</li>
+ <li> <code>DNRM2</code>,</li>
+ <li> <code>DTRSM</code>,</li>
+</ul>
+and from LAPACK are
+<ul>
+ <li> <code>DGEQP3</code>,</li>
+ <li> <code>DGETRF</code>,</li>
+ <li> <code>DGETRS</code>,</li>
+ <li> <code>DORMQR</code>.</li>
+</ul>
+</p>
+<p>
+The SLATEC subroutine
+<ul>
+ <li> <code>DWNNLS</code> is also directly referenced.</li>
+</ul>
+<code>DWNNLS</code> and all its SLATEC dependencies have been slightly edited
+to comply with the Fortran 2008 standard, with all print statements and
+references to stderr being commented out. For a reference to <code>DWNNLS</code>,
+see ACM TOMS Algorithm 587 (Hanson and Haskell).
+The module <code>REAL_PRECISION</code> from HOMPACK90 (ACM TOMS Algorithm 777)
+is used for the real data type. The <code>REAL_PRECISION</code> module,
+<code>DELAUNAYSPARSES</code>, and <code>DWNNLS</code> and its dependencies
+comply with the Fortran 2008 standard.
+</p>
+
+<h4>DELAUNAYSPARSEP</h4>
+<p>
+The interface for DELAUNAYSPARSEP is
+<pre>
+    SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,     &
+                                INTERP_IN, INTERP_OUT, EPS, EXTRAP, RNORM, &
+                                IBUDGET, CHAIN, EXACT, PMODE               )
+</pre>
+</p>
+<p>
+Each of the above parameters is described below.
+</p>
+<p>
+On input:
+<ul>
+ <li><code>D</code> is the dimension of the space for <code>PTS</code> and 
+     <code>Q</code>.</li>
+ <li><code>N</code> is the number of data points in <code>PTS</code>.</li>
+ <li><code>PTS(1:D,1:N)</code> is a real valued matrix with <code>N</code>
+     columns, each containing the coordinates of a single data point in
+     <code>R^D</code>.</li>
+ <li><code>M</code> is the number of interpolation points in <code>Q</code>.</li>
+ <li><code>Q(1:D,1:M)</code> is a real valued matrix with <code>M</code> columns,
+     each containing the coordinates of a single interpolation point in
+     <code>R^D</code>.</li>
+</ul>
+</p>
+<p>
+On output:
+<ul>
+ <li><code>PTS</code> and <code>Q</code> have been rescaled and shifted.
+     All the data points in <code>PTS</code> are now contained in the unit
+     hyperball in <code>R^D</code>, and the points in <code>Q</code>
+     have been shifted and scaled accordingly in relation to <code>PTS</code>.
+     </li>
+ <li><code>SIMPS(1:D+1,1:M)</code> contains the <code>D+1</code> integer
+     indices (corresponding to columns in <code>PTS</code>) for the
+     <code>D+1</code> vertices of the Delaunay simplex containing each
+     interpolation point in <code>Q</code>.</li>
+ <li><code>WEIGHTS(1:D+1,1:M)</code> contains the <code>D+1</code> real-valued
+     weights for expressing each point in <code>Q</code> as a convex combination
+     of the <code>D+1</code> corresponding vertices in <code>SIMPS</code>.</li>
+ <li><code>IERR(1:M)</code> contains integer valued error flags associated with
+     the computation of each of the <code>M</code> interpolation points in
+     <code>Q</code>. The error codes are:
+     <br><br>
+   Codes 0, 1, 2 are expected to occur during normal execution.
+   <ul>
+    <li> 00 : Succesful interpolation.</li>
+    <li> 01 : Succesful extrapolation (up to the allowed extrapolation
+         distance).</li>
+    <li> 02 : This point was outside the allowed extrapolation distance; the
+         corresponding entries in SIMPS and WEIGHTS contain zero values.</li>
+   </ul>
+    
+    Error codes 10--28 indicate that one or more inputs contain illegal
+    values or are incompatible with each other.
+    <ul>
+    <li> 10 : The dimension <code>D</code> must be positive.</li>
+    <li> 11 : Too few data points to construct a triangulation (i.e., 
+         <code>N < D+1</code>).</li>
+    <li> 12 : No interpolation points given (i.e., <code>M < 1</code>).</li>
+    <li> 13 : The first dimension of <code>PTS</code> does not agree with the
+         dimension <code>D</code>.</li>
+    <li> 14 : The second dimension of <code>PTS</code> does not agree with the
+         number of points <code>N</code>.</li>
+    <li> 15 : The first dimension of <code>Q</code> does not agree with the
+         dimension <code>D</code>.</li>
+    <li> 16 : The second dimension of <code>Q</code> does not agree with the
+         number of interpolation points <code>M</code>.</li>
+    <li> 17 : The first dimension of the output array <code>SIMPS</code> does
+         not match the number of vertices needed for a <code>D</code>-simplex
+         (<code>D+1</code>).</li>
+    <li> 18 : The second dimension of the output array <code>SIMPS</code> does
+         not match the number of interpolation points <code>M</code>.</li>
+    <li> 19 : The first dimension of the output array <code>WEIGHTS</code> does
+         not match the number of vertices for a a <code>D</code>-simplex
+         (<code>D+1</code>).</li>
+    <li> 20 : The second dimension of the output array <code>WEIGHTS</code>
+         does not match the number of interpolation points <code>M</code>.</li>
+    <li> 21 : The size of the error array <code>IERR</code> does not match the
+         number of interpolation points <code>M</code>.</li>
+    <li> 22 : <code>INTERP_IN</code> cannot be present without
+         <code>INTERP_OUT</code> or vice versa.</li>
+    <li> 23 : The first dimension of <code>INTERP_IN</code> does not match the
+         first dimension of <code>INTERP_OUT</code>.</li>
+    <li> 24 : The second dimension of <code>INTERP_IN</code> does not match the
+         number of data points <code>PTS</code>.</li>
+    <li> 25 : The second dimension of <code>INTERP_OUT</code> does not match the
+         number of interpolation points <code>M</code>.</li>
+    <li> 26 : The budget supplied in <code>IBUDGET</code> does not contain a
+         positive integer.</li>
+    <li> 27 : The extrapolation distance supplied in <code>EXTRAP</code> cannot
+         be negative.</li>
+    <li> 28 : The size of the <code>RNORM</code> output array does not match the
+         number of interpolation points <code>M</code>.</li>
+    </ul>
+
+    The errors 30, 31 typically indicate that DELAUNAYSPARSE has been given
+    an unclean dataset. These errors can be fixed by preprocessing your
+    data (remove duplicate points and apply PCA or other dimension reduction
+    technique).
+    <ul>
+    <li> 30 : Two or more points in the data set <code>PTS</code> are too close
+         together with respect to the working precision (<code>EPS</code>),
+         which would result in a numerically degenerate simplex.</li>
+    <li> 31 : All the data points in <code>PTS</code> lie in some lower
+         dimensional linear manifold (up to the working precision), and no valid
+         triangulation exists.</li>
+    </ul>
+
+    The error code 40 occurs when another earlier error prevented this point
+    from ever being evaluated.
+    <ul>
+    <li> 40 : An error caused <code>DELAUNAYSPARSEP</code> to terminate before
+         this value could be computed. Note: The corresponding entries in
+         <code>SIMPS</code> and <code>WEIGHTS</code> may contain garbage values.
+         </li>
+    </ul>
+
+    The error code 50 corresponds to allocation of the internal WORK array.
+    Check your systems internal memory settings and limits, in relation
+    to the problem size and DELAUNAYSPARSE's space requirements (see TOMS
+    Alg. paper for more details on DELAUNAYSPARSE's space requirements).
+    <ul>
+    <li> 50 : A memory allocation error occurred while allocating the work array
+         <code>WORK</code>.</li>
+    </ul>
+
+    The errors 60, 61 should not occur with the default settings. If one of
+    these errors is observed, then it is likely that either the value of
+    the optional inputs <code>IBUDGET</code> or <code>EPS</code> has been
+    adjusted in a way that is unwise, or there may be another issue with the
+    problem settings, which is manifesting in an unusual way.
+    <ul>
+    <li> 60 : The budget was exceeded before the algorithm converged on this
+         value. If the dimension is high, try increasing <code>IBUDGET</code>.
+         This error can also be caused by a working precision <code>EPS</code>
+         that is too small for the conditioning of the problem.</li>
+    <li> 61 : A value that was judged appropriate later caused LAPACK to
+         encounter a singularity. Try increasing the value of <code>EPS</code>.
+         </li>
+    </ul>
+
+    The errors 70--72 were caused by the DWNNLS library from SLATEC, which
+    is only used during extrapolation. Note that there is a known issue
+    with this library, when it is linked against included public-domain
+    copy of BLAS/LAPACK, instead of an installed version
+    (i.e., <code>-lblas</code> <code>-llapack</code>).
+    <ul>
+    <li> 70 : Allocation error for the extrapolation work arrays.</li>
+    <li> 71 : The SLATEC subroutine <code>DWNNLS</code> failed to converge
+         during the projection of an extrapolation point onto the convex hull.
+         </li>
+    <li> 72 : The SLATEC subroutine <code>DWNNLS</code> has reported a usage
+         error.</li>
+    </ul>
+
+   The errors 72, 80--83 should never occur, and likely indicate a
+   compiler bug or hardware failure.
+   <ul>
+    <li> 80 : The LAPACK subroutine <code>DGEQP3</code> has reported an illegal
+         value.</li>
+    <li> 81 : The LAPACK subroutine <code>DGETRF</code> has reported an illegal
+         value.</li>
+    <li> 82 : The LAPACK subroutine <code>DGETRS</code> has reported an illegal
+         value.</li>
+    <li> 83 : The LAPACK subroutine <code>DORMQR</code> has reported an illegal
+         value.</li>
+   </ul>
+
+   The error code 90 is unique to DELAUNAYSPARSEP.
+   <ul>
+    <li> 90 : The value of <code>PMODE</code> is not valid.</li>
+   </ul>
+</ul>
+</p>
+<p>
+Optional arguments:
+<ul>
+ <li> <code>INTERP_IN(1:IR,1:N)</code> contains real valued response vectors for
+      each of the data points in <code>PTS</code> on input. The first dimension
+      of <code>INTERP_IN</code> is inferred to be the dimension of these
+      response vectors, and the second dimension must match <code>N</code>.
+      If present, the response values will be computed for each interpolation
+      point in <code>Q</code>, and stored in <code>INTERP_OUT</code>,
+      which therefore must also be present. If both <code>INTERP_IN</code> and
+      <code>INTERP_OUT</code> are omitted, only the containing simplices and
+      convex combination weights are returned.</li>
+ <li> <code>INTERP_OUT(1:IR,1:M)</code> contains real valued response vectors
+      for each interpolation point in <code>Q</code> on output. The first
+      dimension of <code>INTERP_OUT</code> must match the first dimension of
+      <code>INTERP_IN</code>, and the second dimension must match <code>M</code>.
+      If present, the response values at each interpolation point are computed
+      as a convex combination of the response values (supplied in 
+      <code>INTERP_IN</code>) at the vertices of a Delaunay simplex containing
+      that interpolation point. Therefore, if <code>INTERP_OUT</code> is
+      present, then <code>INTERP_IN</code> must also be present.  If both are
+      omitted, only the simplices and convex combination weights are returned.
+      </li>
+ <li> <code>EPS</code> contains the real working precision for the problem on
+      input. By default, <code>EPS</code> is assigned <code>\sqrt{\mu}</code>
+      where <code>\mu</code> denotes the unit roundoff for the machine. In
+      general, any values that differ by less than <code>EPS</code> are judged
+      as equal, and any weights that are greater than <code>-EPS</code> are
+      judged as nonnegative. <code>EPS</code> cannot take a value less than the
+      default value of <code>\sqrt{\mu}</code>. If any value less than
+      <code>\sqrt{\mu}</code> is supplied, the default value will be used
+      instead automatically.</li>
+ <li> <code>EXTRAP</code> contains the real maximum extrapolation distance
+      (relative to the diameter of <code>PTS</code>) on input. Interpolation
+      at a point outside the convex hull of <code>PTS</code> is done by
+      projecting that point onto the convex hull, and then doing normal
+      Delaunay interpolation at that projection. Interpolation at any point
+      in <code>Q</code> that is more than <code>EXTRAP * DIAMETER(PTS)</code>
+      units outside the convex hull of <code>PTS</code> will not be done and
+      an error code of <code>2</code> will be returned. Note that computing
+      the projection can be expensive. Setting <code>EXTRAP=0</code> will
+      cause all extrapolation points to be ignored without ever computing a
+      projection. By default, <code>EXTRAP=0.1</code>
+      (extrapolate by up to 10% of the diameter of <code>PTS</code>).</li>
+ <li> <code>RNORM(1:M)</code> contains the real unscaled projection (2-norm)
+      distances from any projection computations on output. If not present,
+      these distances are still computed for each extrapolation point, but are
+      never returned.</li>
+ <li> <code>IBUDGET</code> on input contains the integer budget for performing
+      flips while iterating toward the simplex containing each interpolation
+      point in <code>Q</code>. This prevents <code>DELAUNAYSPARSEP</code> from
+      falling into an infinite loop when an inappropriate value of
+      <code>EPS</code> is given with respect to the problem conditioning.
+      By default, <code>IBUDGET=50000</code>. However, for extremely
+      high-dimensional problems and pathological inputs, the default value
+      may be insufficient.</li>
+ <li> <code>CHAIN</code> is a logical input argument that determines whether a
+      new first simplex should be constructed for each interpolation point
+      (<code>CHAIN=.FALSE.</code>), or whether the simplex walks should be
+      "daisy-chained." By default, <code>CHAIN=.FALSE.</code> Setting
+      <code>CHAIN=.TRUE.</code> is generally not recommended, unless the size
+      of the triangulation is relatively small or the interpolation points are
+      known to be tightly clustered.</li>
+ <li> <code>EXACT</code> is a logical input argument that determines whether
+      the exact diameter should be computed and whether a check for duplicate
+      data points should be performed in advance. When
+      <code>EXACT=.FALSE.</code>, the diameter of <code>PTS</code> is
+      approximated by twice the distance from the barycenter of <code>PTS</code>
+      to the farthest point in <code>PTS</code>, and no check is done to find
+      the closest pair of points, which could result in hard to find bugs later
+      on. When <code>EXACT=.TRUE.</code>, the exact diameter is computed and
+      an error is returned whenever PTS contains duplicate values up to the
+      precision <code>EPS</code>. By default <code>EXACT=.TRUE.</code>, but
+      setting <code>EXACT=.FALSE.</code> could result in significant speedup
+      when <code>N</code> is large.</li> It is strongly recommended that most
+      users leave <code>EXACT=.TRUE.</code>, as setting
+      <code>EXACT=.FALSE.</code> could result in input errors that are difficult
+      to identify. Also, the diameter approximation could be wrong by up to
+      a factor of two.</li>
+ <li> <code>PMODE</code> is an integer specifying the level of parallelism to
+      be exploited.
+      <ul>
+        <li> If <code>PMODE = 1</code>, then parallelism is exploited at the
+             level of the loop over all interpolation points (Level 1
+             parallelism).</li>
+        <li> If <code>PMODE = 2</code>, then parallelism is exploited at the
+             level of the loops over data points when constructing/flipping
+             simplices (Level 2 parallelism).</li>
+        <li> If <code>PMODE = 3</code>, then parallelism is exploited at both
+             levels. Note: this implies that the total number of threads active
+             at any time could be up to <code>OMP_NUM_THREADS^2</code>.
+             By default, <code>PMODE</code> is set to <code>1</code> if there
+             is more than 1 interpolation point and <code>2</code> otherwise.
+             </li>
+      </ul></li>
+</ul>
+</p>
+<p>
+Subroutines and functions directly referenced from BLAS are
+<ul>
+ <li> <code>DDOT</code>,</li>
+ <li> <code>DGEMV</code>,</li>
+ <li> <code>DNRM2</code>,</li>
+ <li> <code>DTRSM</code>,</li>
+</ul>
+and from LAPACK are
+<ul>
+ <li> <code>DGEQP3</code>,</li>
+ <li> <code>DGETRF</code>,</li>
+ <li> <code>DGETRS</code>,</li>
+ <li> <code>DORMQR</code>.</li>
+</ul>
+</p>
+<p>
+The SLATEC subroutine
+<ul>
+ <li> <code>DWNNLS</code> is also directly referenced.</li>
+</ul>
+<code>DWNNLS</code> and all its SLATEC dependencies have been slightly edited
+to comply with the Fortran 2008 standard, with all print statements and
+references to stderr being commented out. For a reference to <code>DWNNLS</code>,
+see ACM TOMS Algorithm 587 (Hanson and Haskell).
+The module <code>REAL_PRECISION</code> from HOMPACK90 (ACM TOMS Algorithm 777)
+is used for the real data type. The <code>REAL_PRECISION</code> module,
+<code>DELAUNAYSPARSEP</code>, and <code>DWNNLS</code> and its dependencies
+comply with the Fortran 2008 standard.
+</p>
+
+<hr>
+
+<p>
+Notes: DELAUNAYSPARSE is available free of charge via a permissive
+<a href="LICENSE">MIT LICENSE</a>.
+</p>
+</div>
+
+<div id="sidebar">
+<h2>Navigate</h2>
+<ul>
+<li><a href="index.html">Home</a>
+<li><a href="usergd.html">User Guide</a></li>
+<li><a href="delsparse.zip">Download TOMS src</a>
+<li><a href="py_delsparse.zip">Download Python wrapper</a>
+<li><a href="c_delsparse.zip">Download C bindings</a>
+</ul>
+<h2>Inqueries</h2>
+<p>
+Tyler Chang<br>
+Argonne National Lab<br>
+Lemont, IL 60439<br>
+<code>tchang at anl dot gov</code><br>
+</p>
+<p>
+Layne Watson<br>
+Virginia Tech<br>
+Blacksburg, VA 24061<br>
+<code>ltw at cs dot vt dot edu</code><br>
+<code>ltw at ieee dot org</code>
+</p>
+</div>
+
+<div id="footer">
+    <p> <b>Last Modified:</b> 10/17/2020 </p>
+    <p>&copy; 2020 <a href="#">DELAUNAYSPARSE</a></p>
+</div>
+
+</div>
+</body>
+</html>
