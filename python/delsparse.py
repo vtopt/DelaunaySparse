@@ -14,11 +14,11 @@ compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
 # ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
 #    is necessary for supporting CPU parallelism during execution.
 blas_lapack = "-lblas -llapack"
-blas_lapack = "blas.f lapack.f"
+blas_lapack = "delsparse_src/blas.f delsparse_src/lapack.f"
 # ^^ Use a local BLAS and LAPACK if available by commenting the second line
 #    above. The included "blas.f" and "lapack.f" are known to cause error 71
 #    during extrapolation, but there is no known resolution.
-ordered_dependencies = "real_precision.f90 slatec.f delsparse.f90 delsparse_bind_c.f90"
+ordered_dependencies = "delsparse_src/real_precision.f90 delsparse_src/slatec.f delsparse_src/delsparse.f90 delsparse_src/delsparse_bind_c.f90"
 # 
 # --------------------------------------------------------------------
 

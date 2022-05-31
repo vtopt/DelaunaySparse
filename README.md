@@ -7,10 +7,34 @@ Delaunay triangulation. In addition to the original Fortran source code,
 this repository contains a wrapper for Python 3.6+ and C bindings.
 Command line drivers are also provided with the original Fortran code.
 
-## Organization and Usage
+## Usage
 
-The physical organization is as follows. Note that each of the following
-directories could be independently downloaded.
+`DELAUNAYSPARSE` contains several modes of operation.
+
+In the original ACM TOMS release, two Fortran driver subroutines were provided:
+ * `DELAUNAYSPARSES` runs the serial driver to identify the vertices
+   of the simplex/simplices containing one or more interpolation points.
+   Can also (optionally) be set to compute and return the value of the
+   Delaunay interpolant.
+ * `DELAUNAYSPARSEP` runs the parallel driver to identify the vertices
+   of the simplex/simplices containing one or more interpolation points.
+   Can also (optionally) be set to compute and return the value of the
+   Delaunay interpolant (must set the `OMP_NUM_THREADS` environment
+   variable).
+
+Additionally, two command-line drivers are provided, which read input
+from files:
+ * `delsparses` (uses the serial driver), and
+ * `delsparsep` (uses the parallel driver).
+
+In this repository, two additional interfaces are provided for calling
+from C/C++ (`c_binding`) and Python 3 (`python`).
+
+Further detailed user information is documented in the `USAGE` document.
+
+## Organization
+
+The physical organization is as follows.
 
  * `src` contains the original unmodified Fortran source code, as published
    in ACM TOMS Algorithm 1012. This includes 2 command line drivers
@@ -30,6 +54,10 @@ directories could be independently downloaded.
    A test file `test_install.c` can be used for usage examples. This
    directory's internal README also contains best practices when calling
    Fortran from C/C++.
+ * `docs` contains the html source for generating the DelaunaySparse website.
+ * `USAGE` provides additional detailed user information.
+ * DelaunaySparse is shared under the MIT Software License, in the `LICENSE`
+   file.
 
 ## Citation
 
