@@ -185,12 +185,13 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
-!      The errors 72, 80--83 should never occur, and likely indicate a
+!      The errors 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
 ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
 ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
@@ -277,17 +278,18 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSES, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.  
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 ! 
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
 ! 
 USE REAL_PRECISION, ONLY : R8
 IMPLICIT NONE
@@ -597,7 +599,11 @@ OUTER : DO MI = 1, M
                   CALL PROJECT(D, D+1, PTS(:,SIMPS(:,MI)), PROJ, MINRAD,  &
                                IERR(MI), EPS=EPSL, WEIGHTS=WEIGHTS(:,MI))
                   IF (IERR(MI) .NE. 0) THEN
-                     IERR(MI) = IERR(MI) + 70; CYCLE OUTER
+                     IF (IERR(MI) < 0) THEN
+                        IERR(MI) = 70; CYCLE OUTER
+                     ELSE
+                        IERR(MI) = IERR(MI) + 70; CYCLE OUTER
+                     END IF
                   END IF
 
                   ! A solution has been found; return it.
@@ -633,7 +639,11 @@ OUTER : DO MI = 1, M
          CALL PROJECT(D, N, PTS, PROJ, RNORML, IERR(MI), EPS=EPSL)
          IF (IERR(MI) .NE. 0) THEN
             ! Set the error flag and skip this point.
-            IERR(MI) = 70 + IERR(MI)
+            IF (IERR(MI) < 0) THEN
+               IERR(MI) = 70; CYCLE OUTER
+            ELSE
+               IERR(MI) = IERR(MI) + 70; CYCLE OUTER
+            END IF
             CYCLE OUTER
          END IF
 
@@ -1256,10 +1266,11 @@ SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,  &
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
 !      The errors 72, 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
@@ -1362,17 +1373,18 @@ SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,  &
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSEP, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.  
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 ! 
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
 ! 
 USE REAL_PRECISION, ONLY : R8
 IMPLICIT NONE
@@ -2331,11 +2343,21 @@ END IF
                   !END IF
 
                   ! New code (version 2) for computing projections via BQPD.
+                  ! Regretfully, this step must be done serially since BQPD is
+                  ! not thread safe. However, this is likely for the best
+                  ! since BQPD is generally faster, but more memory-hungry
+                  ! than DELAUNAYSPARSE.
+                  !$OMP CRITICAL(PROJECT)
                   CALL PROJECT(D, D+1, PTS(:,SIMPS(:,MI)), PROJ, MINRAD,  &
                                IERR_PRIV, EPS=EPSL, WEIGHTS=WEIGHTS(:,MI))
+                  !$OMP END CRITICAL(PROJECT)
                   IF (IERR_PRIV .NE. 0) THEN
                      !$OMP CRITICAL(CHECK_IERR)
-                     IERR(MI) = IERR_PRIV + 70
+                     IF (IERR_PRIV < 0) THEN
+                        IERR(MI) = 70
+                     ELSE
+                        IERR(MI) = IERR_PRIV + 70
+                     END IF
                      !$OMP END CRITICAL(CHECK_IERR)
                      CYCLE OUTER
                   END IF
@@ -2612,11 +2634,20 @@ END IF
          END IF
 
          ! Otherwise, project the extrapolation point onto the convex hull.
+         ! Regretfully, this step must be done serially since BQPD is not
+         ! thread safe. However, this is likely for the best since BQPD is
+         ! generally faster, but more memory-hungry than DELAUNAYSPARSE.
+         !$OMP CRITICAL(PROJECT)
          CALL PROJECT(D, N, PTS, PROJ, RNORML, IERR_PRIV, EPS=EPSL)
+         !$OMP END CRITICAL(PROJECT)
          IF (IERR_PRIV .NE. 0) THEN
             ! Set the error flag and skip this point.
             !$OMP CRITICAL(CHECK_IERR)
-            IERR(MI) = 70 + IERR_PRIV
+            IF (IERR_PRIV < 0) THEN
+               IERR(MI) = 70
+            ELSE
+               IERR(MI) = IERR_PRIV + 70
+            END IF
             !$OMP END CRITICAL(CHECK_IERR)
             CYCLE OUTER
          END IF
@@ -2942,7 +2973,7 @@ SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
 !       6 = not enough space for reduced Hessian matrix (increase kmax)
 !       7 = not enough space for sparse factors (sparse code only)
 !       8 = maximum number of unsuccessful restarts taken
-!       9 = a memory allocation error occurred (indicates the problem size is
+!      -1 = a memory allocation error occurred (indicates the problem size is
 !           too large for the additional memory overhead from extrapolation)
 !
 !
@@ -2969,9 +3000,13 @@ SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
 !
 !
 ! This work is from a modification to the driver for BQPD by R. Fletcher,
-! with modifications made by Tyler Chang and Sven Leyffer.
+! with modifications made by Tyler H. Chang (THC) and Sven Leyffer (SL).
 !
-! Last Update: Sep, 2023 by THC
+!
+! Version history:
+!    
+! Version 1: Forked from BQPD by SL (Aug 2023)
+!            Converted to f90 by THC (Sep 2023)
 ! 
 USE REAL_PRECISION, ONLY : R8
 IMPLICIT NONE
@@ -3047,10 +3082,10 @@ MXLWS = 1 + 2 * MXG + KMAX + 9 * N + 1
 ALLOCATE(A(NNZA), BL(N+1), BU(N+1), E(N+1), G(N), R(N+1), V(N), &
          W(N+1), WS(MXWS), X(N), STAT=IERR)
 IF (IERR .NE. 0) THEN
-   IERR = 9; RETURN; END IF
+   IERR = -1; RETURN; END IF
 ALLOCATE(LS(N+1), LA(0:NNZA+3), LWS(0:MXLWS), STAT=IERR)
 IF (IERR .NE. 0) THEN
-   IERR = 9; RETURN; END IF
+   IERR = -1; RETURN; END IF
 
 ! Set the stride of WS.
 LWS(0) = D

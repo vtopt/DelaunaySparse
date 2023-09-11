@@ -1,31 +1,51 @@
    ACM TOMS Algorithm 1012: DELAUNAYSPARSE
    -- Interpolation via a Sparse Subset of the Delaunay Triangulation
 
+Version 2.
+
 The package DELAUNAYSPARSE contains serial and parallel codes, written
 in FORTRAN 2003 with OpenMP, for performing interpolation in medium to
 high dimensions via a sparse subset of the Delaunay triangulation. The
 serial driver subroutine is DELAUNAYSPARSES and the parallel driver is
 DELAUNAYSPARSEP. Both subroutines use the REAL_PRECISION module from
 HOMPACK90 (ACM TOMS Algorithm 777) for approximately 64-bit precision
-on all known machines, and the SLATEC subroutine DWNNLS (ACM TOMS
-Algorithm 587) for solving an inequality constrained least squares
-problem. Additionally, DELAUNAYSPARSE depends on several BLAS and LAPACK
-subroutines. The module DELSPARSE_MOD contains the REAL_PRECISION (R8)
-data type, and interface blocks for DELAUNAYSPARSES, DELAUNAYSPARSEP,
-and DWNNLS. Comments at the top of each subroutine document their
-usage, and examples demonstrating their usage are provided in the
-sample programs samples.f90 and samplep.f90.
+on all known machines, and a minimal copy of R. Fletcher's BQPD quadratic
+program solver with its critical dependencies. Additionally, DELAUNAYSPARSE
+depends on several BLAS and LAPACK subroutines. The module DELSPARSE_MOD
+contains the REAL_PRECISION (R8) data type, and interface blocks for
+DELAUNAYSPARSES, DELAUNAYSPARSEP, and the PROJECT subroutine, which can be
+used to compute projections onto the convex hull. Comments at the top of
+each subroutine document their usage, and examples demonstrating their
+usage are provided in the sample programs samples.f90 and samplep.f90.
+
+Note that in version 1, the SLATEC subroutine DWNNLS (ACM TOMS Algorithm 587)
+for solving inequality constrained least squares problems was an additional
+requirement, but it has been replaced by BQPD starting in version 2.
+
+** Please note the BQPD carries a stricter LICENSE than DELAUNAYSPARSE **
+
+If needed, DELAUNAYSPARSE can be used without BQPD by setting the optional
+argument:
+   EXTRAP=0.0_R8
+
+However, this will not allow for extrapolation outside the convex hull.
+To enable extrapolation or to use the new PROJECT subroutine, please note
+the secondary LICENSE file in bqpd_min/LICENSE.
 
 The physical organization is as follows:
 
  * The file delsparse.f90 contains the module REAL_PRECISION,
    DELSPARSE_MOD, and the driver subroutines DELAUNAYSPARSES, and
-   DELAUNAYSPARSEP.
- * The file slatec.f contains the subroutine DWNNLS and its dependencies
-   from the SLATEC library. This library has been slightly modified to
-   comply with the modern Fortran standards. Additionally, legacy
-   implementations of the BLAS subroutines DROTM and DTROMG have been
-   included under different names to avoid dependency issues.
+   DELAUNAYSPARSEP. In version 2, an additional subroutine was added
+   named PROJECT, which projects an extrapolation point onto the
+   convex hull of a d-dimensional point set.
+ * The file bqpd_min/bqpd.f contains a minimal copy of the quadratic
+   program solver BQPD, by R. Fletcher. Note that multiple auxiliary files
+   have been combined into one for portability, and several additional
+   dependencies that provide features unused by DELAUNAYSPARSE have been
+   omitted.
+ * The file bqpd_min/LICENSE contains a separate LICENSE file for bqpd.f,
+   which is different than the MIT LICENSE carried by DELAUNAYSPARSE.
  * The file samples.f90 contains a sample main program demonstrating the
    usage of DELAUNAYSPARSES, with optional arguments.
  * The file samplep.f90 contains a sample main program demonstrating the
@@ -37,6 +57,10 @@ The physical organization is as follows:
    data set for samples.f90 and samplep.f90.
  * The file sample_input4d.dat contains a sample 4-dimensional input
    data set for samples.f90 and samplep.f90.
+ * The file sample_extrap10.dat contains a sample 10-dimensional input
+   data set for samples.f90 and samplep.f90. This file resulted in a
+   failure for DELAUNAYSPARSE version 1, caused by the usage of DWNNLS.
+   This failure case is correctly solved by version 2 with BQPD.
  * The files lapack.f and blas.f contain all LAPACK and BLAS
    subroutines that are referenced (both directly and indirectly) in
    DELAUNAYSPARSE.
@@ -51,7 +75,7 @@ To check that the installation of DELAUNAYSPARSES and DELAUNAYSPARSEP is
 correct, assuming that your Fortran compiler allows mixing fixed format
 .f and free format .f90 files in the same compile command, use the command
 
-$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f test_install.f90 \
+$FORT $OPTS delsparse.f90 bqpd_min/bqpd.f lapack.f blas.f test_install.f90 \
   -o test_install $LIBS
 
 where '$FORT' is a Fortran 2003 compliant compiler supporting OpenMP
@@ -67,7 +91,7 @@ Then run the tests using
 
 To compile and link the sample main programs sample{s|p}.f90, use
 
-$FORT $OPTS delsparse.f90 slatec.f lapack.f blas.f sample{s|p}.f90 \
+$FORT $OPTS delsparse.f90 bqpd_min/bqpd.f lapack.f blas.f sample{s|p}.f90 \
   -o sample{s|p} $LIBS
 
 similar to above.  To run a sample main program, use

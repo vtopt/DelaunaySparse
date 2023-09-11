@@ -18,7 +18,7 @@ blas_lapack = "delsparse_src/blas.f delsparse_src/lapack.f"
 # ^^ Use a local BLAS and LAPACK if available by commenting the second line
 #    above. The included "blas.f" and "lapack.f" are known to cause error 71
 #    during extrapolation, but there is no known resolution.
-ordered_dependencies = "delsparse_src/real_precision.f90 delsparse_src/slatec.f delsparse_src/delsparse.f90 delsparse_src/delsparse_bind_c.f90"
+ordered_dependencies = "delsparse_src/real_precision.f90 delsparse_src/bqpd_min/bqpd.f delsparse_src/delsparse.f90 delsparse_src/delsparse_bind_c.f90"
 # 
 # --------------------------------------------------------------------
 

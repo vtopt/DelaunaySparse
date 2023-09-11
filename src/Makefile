@@ -17,8 +17,8 @@ samplep: samplep.f90 delsparse.o bqpd.o lapack.o blas.o
 delsparse.o: delsparse.f90 
 	$(FORT) $(CFLAGS) $(OPTS) delsparse.f90 -o delsparse.o
 
-bqpd.o : bqpd.f
-	$(FORT) $(CFLAGS) $(OPTS) bqpd.f -o bqpd.o
+bqpd.o : bqpd_min/bqpd.f
+	$(FORT) $(CFLAGS) $(OPTS) bqpd_min/bqpd.f -o bqpd.o
 
 lapack.o : lapack.f
 	$(FORT) $(CFLAGS) $(OPTS) lapack.f -o lapack.o

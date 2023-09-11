@@ -36,10 +36,11 @@ Further detailed user information is documented in the `USAGE` document.
 
 The physical organization is as follows.
 
- * `src` contains the original unmodified Fortran source code, as published
-   in ACM TOMS Algorithm 1012. This includes 2 command line drivers
-   `samples.f90` (serial driver) and `samplep.f90` (parallel driver), which
-   can be used on formatted data files from the command line.
+ * `src` contains version 2 of the ACM TOMS Fortran source code, as published
+   in ACM TOMS Algorithm 1012 and modified in the subsequent remark.
+   This includes 2 command line drivers `samples.f90` (serial driver) and
+   `samplep.f90` (parallel driver), which can be used on formatted data files
+   from the command line.
    Comments at the top of each subroutine document their usage.
    See this directory's internal README for further information on
    building, testing, and usage.
@@ -58,6 +59,19 @@ The physical organization is as follows.
  * `USAGE` provides additional detailed user information.
  * DelaunaySparse is shared under the MIT Software License, in the `LICENSE`
    file.
+
+## Version 2
+
+This is version 2 of DELAUNAYSPARSE.
+
+In the latest version, we have switched away from using the SLATEC subroutine
+DWNNLS for computing projections onto the convex hull. Instead, we favor the
+BQPD quadratic program solver of R. Fletcher, which is much more robust for
+large projection problems.
+
+Since this problem was somewhat nontrivial, we have added an additional
+external subroutine ``PROJECT`` to the ``delsparse.f90`` file, for
+external usage.
 
 ## Citation
 

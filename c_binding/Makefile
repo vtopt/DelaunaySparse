@@ -3,10 +3,9 @@ CC = gcc
 CFLAGS = -c
 OPTS = -fopenmp 
 LIBS = blas.f lapack.f
-LEGACY = -std=legacy
 
-all: test_install.o delsparse_bind_c.o delsparse.o slatec.o delsparse.h
-	$(FORT) $(OPTS) test_install.o delsparse_bind_c.o delsparse.o slatec.o $(LIBS) -o test_install
+all: test_install.o delsparse_bind_c.o delsparse.o bqpd.o delsparse.h
+	$(FORT) $(OPTS) test_install.o delsparse_bind_c.o delsparse.o bqpd.o $(LIBS) -o test_install
 	./test_install
 
 test_install.o: test_install.c
@@ -18,8 +17,8 @@ delsparse_bind_c.o: delsparse_bind_c.f90 delsparse.o
 delsparse.o: delsparse.f90 
 	$(FORT) $(CFLAGS) $(OPTS) delsparse.f90 -o delsparse.o
 
-slatec.o : slatec.f
-	$(FORT) $(CFLAGS) $(OPTS) $(LEGACY) slatec.f -o slatec.o
+bqpd.o : bqpd_min/bqpd.f
+	$(FORT) $(CFLAGS) $(OPTS) $(LEGACY) bqpd_min/bqpd.f -o bqpd.o
 
 clean:
 	rm -f *.o *.mod test_install
