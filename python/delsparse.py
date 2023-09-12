@@ -10,15 +10,16 @@ fort_compiler = "gfortran"
 shared_object_name = "delsparse_clib.so"
 source_dir = os.path.abspath(os.path.dirname(__file__))
 path_to_lib = os.path.join(source_dir, shared_object_name)
+source_dir = os.path.join(source_dir, "delsparse_src")
 compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
 # ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
 #    is necessary for supporting CPU parallelism during execution.
 blas_lapack = "-lblas -llapack"
-blas_lapack = "delsparse_src/blas.f delsparse_src/lapack.f"
+blas_lapack = f"{source_dir}/blas.f {source_dir}/lapack.f"
 # ^^ Use a local BLAS and LAPACK if available by commenting the second line
 #    above. The included "blas.f" and "lapack.f" are known to cause error 71
 #    during extrapolation, but there is no known resolution.
-ordered_dependencies = "delsparse_src/real_precision.f90 delsparse_src/bqpd_min/bqpd.f delsparse_src/delsparse.f90 delsparse_src/delsparse_bind_c.f90"
+ordered_dependencies = f"{source_dir}/real_precision.f90 {source_dir}/bqpd_min/bqpd.f {source_dir}/delsparse.f90 {source_dir}/delsparse_bind_c.f90"
 # 
 # --------------------------------------------------------------------
 
