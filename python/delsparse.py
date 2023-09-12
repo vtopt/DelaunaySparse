@@ -11,7 +11,7 @@ shared_object_name = "delsparse_clib.so"
 source_dir = os.path.abspath(os.path.dirname(__file__))
 path_to_lib = os.path.join(source_dir, shared_object_name)
 source_dir = os.path.join(source_dir, "delsparse_src")
-compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
+compile_options = "-fPIC -shared -O3 -fopenmp"
 # ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
 #    is necessary for supporting CPU parallelism during execution.
 blas_lapack = "-lblas -llapack"
