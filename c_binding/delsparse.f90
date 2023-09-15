@@ -191,7 +191,7 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 ! 7x : BQPD has reported an error while computing the projection. See the
 !      comment block for the PROJECT subroutine for more details.
 !
-!      The errors 72, 80--83 should never occur, and likely indicate a
+!      The errors 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
 ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
 ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
@@ -3069,7 +3069,7 @@ IF (PRESENT(EPS)) THEN
 END IF
 ! Set the size of Hessian (KK) and other BQPD bookkeeping constants.
 KK   = D*N+D
-KMAX = D
+KMAX = D+1
 LL   = 2
 NNZA = 2*N
 ! Set the storage in WS and LWS for MATMUL(sparseL, F).
@@ -3117,7 +3117,7 @@ BL(N+1) = 1.0_R8
 BU(N+1) = 1.0_R8
 
 ! Set BQPD's diagnostic information.
-FMIN = -DNRM2(D, Z, 1) ** 2 - 1.0_R8 ! Lower bound on objective.
+FMIN = -DNRM2(D, Z, 1) ** 2.0_R8 - 1.0_R8 ! Lower bound on objective.
 K = D ! Dimension of the reduced space (set of inactive constraints).
 KMX = MIN(N, KMAX) ! Set the maximum value for K.
 ! Solve the problem with BQPD.
