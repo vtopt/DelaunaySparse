@@ -1,3 +1,7 @@
+MODULE REAL_PRECISION  ! HOMPACK90 module for 64-bit arithmetic.
+INTEGER, PARAMETER:: R8=SELECTED_REAL_KIND(13)
+END MODULE REAL_PRECISION
+
 MODULE DELSPARSE_MOD
 ! This module contains the REAL_PRECISION R8 data type for 64-bit arithmetic
 ! and interface blocks for the DELAUNAYSPARSES and DELAUNAYSPARSEP 
@@ -187,7 +191,7 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 ! 7x : BQPD has reported an error while computing the projection. See the
 !      comment block for the PROJECT subroutine for more details.
 !
-!      The errors 72, 80--83 should never occur, and likely indicate a
+!      The errors 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
 ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
 ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
