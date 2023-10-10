@@ -3073,7 +3073,7 @@ KMAX = D+1
 LL   = 2
 NNZA = 2*N
 ! Set the storage in WS and LWS for MATMUL(sparseL, F).
-MXWS_ = 5 * N + N * 200
+MXWS_ = 5 * N + N
 MXG = KMAX * (KMAX + 9) / 2 + 2 * (N + 1) + KK
 MXWS = MXWS_ + MXG + KK
 MXLWS = 1 + 2 * MXG + KMAX + 9 * N + 1
