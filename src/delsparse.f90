@@ -456,11 +456,6 @@ ELSE
    EXACTL = .TRUE.
 END IF
 
-! Scale and center the data points and interpolation points.
-CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
-IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
-   IERR(:) = 30; RETURN; END IF
-
 ! Query DGEQP3 for optimal work array size (LWORK).
 LWORK = -1
 CALL DGEQP3(D,D,LQ,D,IPIV,TAU,B,LWORK,IERR(1))
@@ -468,6 +463,11 @@ LWORK = INT(B(1)) ! Compute the optimal work array size.
 ALLOCATE(WORK(LWORK), STAT=I) ! Allocate WORK to size LWORK.
 IF (I .NE. 0) THEN ! Check for memory allocation errors.
    IERR(:) = 50; RETURN; END IF
+
+! Scale and center the data points and interpolation points.
+CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
+IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
+   IERR(:) = 30; RETURN; END IF
 
 ! Initialize all error codes to "TBD" values.
 IERR(:) = 40
@@ -741,7 +741,8 @@ SIMPS(:,MI) = 0
 MINRAD = HUGE(0.0_R8)
 DO I = 1, N
    ! Check the distance to Q(:,MI).
-   CURRRAD = DNRM2(D, PTS(:,I) - PROJ(:), 1)
+   WORK(1:D) = PTS(:,I) - PROJ(:)
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD) THEN; MINRAD = CURRRAD; SIMPS(1,MI) = I; END IF
 END DO
 ! Find the second point, i.e., the closest point to PTS(:,SIMPS(1,MI)).
@@ -750,7 +751,8 @@ DO I = 1, N
    ! Skip repeated vertices.
    IF (I .EQ. SIMPS(1,MI)) CYCLE
    ! Check the diameter of the resulting circumsphere.
-   CURRRAD = DNRM2(D, PTS(:,I)-PTS(:,SIMPS(1,MI)), 1)
+   WORK(1:D) = PTS(:,I) - PTS(:,SIMPS(1,MI))
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD) THEN; MINRAD = CURRRAD; SIMPS(2,MI) = I; END IF
 END DO
 IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
@@ -787,7 +789,8 @@ DO I = 2, D
       ! Check that this point is not already in the simplex.
       IF (ANY(SIMPS(:,MI) .EQ. J)) CYCLE
       ! If PTS(:,J) is more than twice MINRAD from CENTER, do a quick skip.
-      IF (DNRM2(D, CENTER - PTS(:,J), 1) > 2.0_R8 * MINRAD) CYCLE
+      WORK(1:D) = CENTER - PTS(:,J)
+      IF (DNRM2(D, WORK(1:D), 1) > 2.0_R8 * MINRAD) CYCLE
       ! Perform a rank-1 update to the current QR factorization of A^T by
       ! rotating PTS(:,I) - PTS(:,SIMPS(1,MI)) by Q^T and storing in the
       ! final column of R.
@@ -897,7 +900,8 @@ CALL DTRSM('L', 'U', 'T', 'N', D-1, 1, 1.0_R8, LQ, D, X, D)
 ! Loop through all points P* in PTS.
 DO I = 1, N
    ! Check that P* is inside the current ball.
-   IF (DNRM2(D, PTS(:,I) - CENTER(:), 1) > MINRAD) CYCLE ! If not, skip.
+   WORK(1:D) = CENTER - PTS(:,I)
+   IF (DNRM2(D, WORK(1:D), 1) > MINRAD) CYCLE ! If not, skip.
    ! Check that P* is on the appropriate halfspace.
    SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
    IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE ! If not, skip.
@@ -1141,7 +1145,8 @@ IF (EXACTL) THEN
    ! and MINDIST values.
    DO I = 1, N ! Cycle through all pairs of points.
       DO J = I + 1, N
-         DISTANCE = DNRM2(D, PTS(:,I) - PTS(:,J), 1) ! Compute the distance.
+         WORK(1:D) = PTS(:,I) - PTS(:,J)
+         DISTANCE = DNRM2(D, WORK(1:D), 1) ! Compute the distance.
          IF (DISTANCE > DIAMETER) THEN ! Compare to the current diameter.
             DIAMETER = DISTANCE
          END IF
@@ -1577,11 +1582,6 @@ ELSE ! The default setting for PMODE is level 1 parallelism if M > 1.
    END IF
 END IF
 
-! Scale and center the data points and interpolation points.
-CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
-IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
-   IERR(:) = 30; RETURN; END IF
-
 ! Query DGEQP3 for optimal work array size (LWORK).
 LWORK = -1
 CALL DGEQP3(D,D,LQ,D,IPIV,TAU,B,LWORK,IERR(1))
@@ -1589,6 +1589,11 @@ LWORK = INT(B(1)) ! Compute the optimal work array size.
 ALLOCATE(WORK(LWORK), STAT=I) ! Allocate WORK to size LWORK.
 IF (I .NE. 0) THEN ! Check for memory allocation errors.
    IERR(:) = 50; RETURN; END IF
+
+! Scale and center the data points and interpolation points.
+CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
+IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
+   IERR(:) = 30; RETURN; END IF
 
 !! Initialize PRGOPT_DWNNLS in case of extrapolation.
 !PRGOPT_DWNNLS(1) = 1.0_R8
@@ -1702,7 +1707,8 @@ MINRAD = HUGE(0.0_R8)
 !$OMP DO SCHEDULE(STATIC)
 DO I = 1, N
    ! Check the distance to Q(:,MI)
-   CURRRAD = DNRM2(D, PTS(:,I) - PROJ(:), 1)
+   WORK(1:D) = PTS(:,I) - PROJ(:)
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD_PRIV) THEN
       MINRAD_PRIV = CURRRAD; VERTEX_PRIV = I;
    END IF
@@ -1724,7 +1730,8 @@ DO I = 1, N
    ! Skip repeated vertices.
    IF (I .EQ. SIMPS(1,MI)) CYCLE
    ! Check the diameter of the resulting circumsphere.
-   CURRRAD = DNRM2(D, PTS(:,I)-PTS(:,SIMPS(1,MI)), 1)
+   WORK(1:D) = PTS(:,I) - PTS(:,SIMPS(1,MI))
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD_PRIV) THEN
       MINRAD_PRIV = CURRRAD; VERTEX_PRIV = I
    END IF
@@ -1806,7 +1813,8 @@ DO I = 2, D
       ! Check that this point is not already in the simplex.
       IF (ANY(SIMPS(:,MI) .EQ. J)) CYCLE
       ! If PTS(:,J) is more than twice MINRAD_PRIV from CENTER, do a quick skip.
-      IF (DNRM2(D, CENTER - PTS(:,J), 1) > 2.0_R8 * MINRAD_PRIV) CYCLE
+      WORK(1:D) = CENTER - PTS(:,J)
+      IF (DNRM2(D, WORK(1:D), 1) > 2.0_R8 * MINRAD_PRIV) CYCLE
       ! Perform a rank-1 update to the current QR factorization of A^T by
       ! rotating PTS(:,I) - PTS(:,SIMPS(1,MI) by Q^T and storing in the
       ! final column of R.
@@ -2157,7 +2165,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    DO I = 1, N
       IF(IERR_PRIV .NE. 0) CYCLE ! If an error occurs, skip to the end.
       ! Check that P* is inside the current ball.
-      IF (DNRM2(D, PTS(:,I) - CENTER_PRIV(:), 1) > MINRAD_PRIV) CYCLE
+      WORK(1:D) = PTS(:,I) - CENTER_PRIV(:)
+      IF (DNRM2(D, WORK(1:D), 1) > MINRAD_PRIV) CYCLE
       ! Check that P* is on the appropriate halfspace.
       SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
       IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE
@@ -2190,7 +2199,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    !$OMP CRITICAL(REDUC_4)
    ! Check if PTS(:,VERTEX_PRIV) is inside the circumball.
    IF (VERTEX_PRIV .NE. 0) THEN
-      IF (DNRM2(D, PTS(:,VERTEX_PRIV) - CENTER(:), 1) < MINRAD) THEN
+      WORK(1:D) = PTS(:,VERTEX_PRIV) - CENTER(:)
+      IF (DNRM2(D, WORK(1:D), 1) < MINRAD) THEN
          MINRAD = MINRAD_PRIV
          CENTER(:) = CENTER_PRIV(:)
          SIMPS(D+1,MI) = VERTEX_PRIV
@@ -2509,7 +2519,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    DO I = 1, N
       IF(IERR_PRIV .NE. 0) CYCLE ! If an error occurs, skip to the end.
       ! Check that P* is inside the current ball.
-      IF (DNRM2(D, PTS(:,I) - CENTER_PRIV(:), 1) > MINRAD_PRIV) CYCLE
+      WORK(1:D) = PTS(:,I) - CENTER_PRIV(:)
+      IF (DNRM2(D, WORK(1:D), 1) > MINRAD_PRIV) CYCLE
       ! Check that P* is on the appropriate halfspace.
       SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
       IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE
@@ -2542,7 +2553,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    !$OMP CRITICAL(REDUC_4)
    ! Check if PTS(:,VERTEX_PRIV) is inside the circumball.
    IF (VERTEX_PRIV .NE. 0) THEN
-      IF (DNRM2(D, PTS(:,VERTEX_PRIV) - CENTER(:), 1) < MINRAD) THEN
+      WORK(1:D) = PTS(:,VERTEX_PRIV) - CENTER(:)
+      IF (DNRM2(D, WORK(1:D), 1) < MINRAD) THEN
          MINRAD = MINRAD_PRIV
          CENTER(:) = CENTER_PRIV(:)
          SIMPS(D+1,MI) = VERTEX_PRIV
@@ -2854,6 +2866,7 @@ REAL(KIND=R8), INTENT(OUT) :: MINDIST, DIAMETER, SCALE
 
 ! Local variables.
 REAL(KIND=R8) :: PTS_CENTER(D) ! The center of the data points PTS.
+REAL(KIND=R8) :: WORK_TMP(D) ! A smaller local work array.
 REAL(KIND=R8) :: DISTANCE ! The current distance.
 
 ! Initialize local values.
@@ -2894,7 +2907,8 @@ IF (EXACTL) THEN
    !$OMP& DEFAULT(SHARED)
    DO I = 1, N ! Cycle through all pairs of points.
       DO J = I + 1, N
-         DISTANCE = DNRM2(D, PTS(:,I) - PTS(:,J), 1) ! Compute the distance.
+         WORK_TMP(:) = PTS(:,I) - PTS(:,J)
+         DISTANCE = DNRM2(D, WORK_TMP, 1) ! Compute the distance.
          IF (DISTANCE > DIAMETER) THEN ! Compare to the current diameter.
             DIAMETER = DISTANCE
          END IF
