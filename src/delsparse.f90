@@ -2905,11 +2905,11 @@ FORALL (I = 1:M) Q(:,I) = (Q(:,I) - PTS_CENTER(:)) / SCALE
 IF (EXACTL) THEN
    ! If exact error error checking is turned on, then compute the DIAMETER
    ! and MINDIST values.
-   !$OMP PARALLEL DO &
-   !$OMP& PRIVATE(I, DISTANCE),    &
-   !$OMP& REDUCTION(MAX:DIAMETER), &
-   !$OMP& REDUCTION(MIN:MINDIST),  &
-   !$OMP& SCHEDULE(STATIC, 100),   &
+   !$OMP PARALLEL DO                      &
+   !$OMP& PRIVATE(I, DISTANCE, WORK_TMP), &
+   !$OMP& REDUCTION(MAX:DIAMETER),        &
+   !$OMP& REDUCTION(MIN:MINDIST),         &
+   !$OMP& SCHEDULE(STATIC, 100),          &
    !$OMP& DEFAULT(SHARED)
    DO I = 1, N ! Cycle through all pairs of points.
       DO J = I + 1, N
