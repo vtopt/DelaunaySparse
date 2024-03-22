@@ -9,8 +9,8 @@ high dimensions via a sparse subset of the Delaunay triangulation. The
 serial driver subroutine is DELAUNAYSPARSES and the parallel driver is
 DELAUNAYSPARSEP. Both subroutines use the REAL_PRECISION module from
 HOMPACK90 (ACM TOMS Algorithm 777) for approximately 64-bit precision
-on all known machines, and a minimal copy of R. Fletcher's BQPD quadratic
-program solver with its critical dependencies. Additionally, DELAUNAYSPARSE
+on all known machines, and a minimal copy of R. Fletcher's quadratic program
+solver BQPD with its critical dependencies. Additionally, DELAUNAYSPARSE
 depends on several BLAS and LAPACK subroutines. The module DELSPARSE_MOD
 contains the REAL_PRECISION (R8) data type, and interface blocks for
 DELAUNAYSPARSES, DELAUNAYSPARSEP, and the PROJECT subroutine, which can be

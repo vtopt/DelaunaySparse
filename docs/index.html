@@ -20,18 +20,26 @@
 <div id="content">
 <h2>About the Software</h2>
 <p>
-    <strong><span class="green">DELAUNAYSPARSE</span></strong> [1]
-    contains both serial and parallel codes written in Fortran 2003
-    (with OpenMP 4.5) for performing medium- to high-dimensional
+    <strong><span class="green">DELAUNAYSPARSE</span></strong>
+    <a href="#r1">[1]</a> contains both serial and parallel codes written in
+    Fortran 2003 (with OpenMP 4.5) for performing medium- to high-dimensional
     interpolation via the Delaunay triangulation. To accommodate
     the exponential growth in the size of the Delaunay triangulation in
     high dimensions, DELAUNAYSPARSE computes only a sparse subset of the
     complete Delaunay triangulation, as necessary for performing
     interpolation at the user specified points.
-    DELAUNAYSPARSE implements the algorithm in [2] and
-    has been used for various applications including aerospace
-    engineering [3], HPC performance modeling [4,5], nonparametric
-    statistics [6], machine learning regression [7], and graph generation [8].
+    DELAUNAYSPARSE implements the algorithm in <a href="#r2">[2]</a> and
+    has been used for various applications including
+    aerospace engineering <a href="#r3">[3]</a>,
+    HPC performance modeling <a href="#r4">[4]</a>,<a href="#r5">[5]</a>,
+    nonparametric statistics <a href="#r6">[6]</a>,
+    machine learning regression <a href="#r7">[7]</a>,
+    and graph generation <a href="#r8">[8]</a>.
+</p>
+<p>
+    An update to DELAUNAYSPARSE was recently published in
+    <a href="#r9">[9]</a>, improving our methodology for
+    projecting extrapolation points onto the convex hull.
 </p>
 <p class="readmore">
     <a href="usergd.html">Read the User Guide</a> &raquo;
@@ -42,7 +50,7 @@
 [1] T. H. Chang, L. T. Watson, T. C. H. Lux, A. R. Butt, K. W. Cameron,
 and Y. Hong, "Algorithm 1012: DELAUNAYSPARSE: Interpolation via a Sparse Subset
 of the Delaunay triangulation in Medium to High Dimensions",
-<i>ACM Trans. Math. Software</i>, 46, Article 38 (2020), 1-20.
+<i>ACM Trans. Math. Software</i>, 46, Article 38 (2020), 20 pages.
 </p></a>
 
 <a href="http://doi.org/10.1145/3190645.3190680" id="r2"><p>
@@ -100,6 +108,12 @@ Problems".
 <i>Ph.D. thesis, Virginia Polytechnic Institute and State University,
 Blacksburg, VA, USA</i>, 2020.
 </p></a>
+
+<a href="https://vtechworks.lib.vt.edu/handle/10919/98915" id="r9"><p>
+[9] T. H. Chang, L. T. Watson, S. Leyffer, T. C. H. Lux, and H. M. J. Almohri,
+"Remark on Algorithm 1012: Computing projections with large data sets",
+<i>ACM Trans. Math. Software</i>, to appear (2024), 8 pages.
+</p></a>
 </div>
 
 <div id="sidebar">
@@ -114,21 +128,18 @@ Blacksburg, VA, USA</i>, 2020.
 <h2>Inqueries</h2>
 <p>
 Tyler Chang<br>
-Argonne National Lab<br>
-Lemont, IL 60439<br>
-<code>tchang at anl dot gov</code><br>
+<code>thchang at vt dot edu</code><br>
 </p>
 <p>
 Layne Watson<br>
-Virginia Tech<br>
-Blacksburg, VA 24061<br>
 <code>ltw at cs dot vt dot edu</code><br>
 <code>ltw at ieee dot org</code>
 </p>
 </div>
 
 <div id="footer">
-    <p> <b>Last Modified:</b> 11/17/2020 </p>
+    <p> <b>Last Modified:</b> 3/22/2024</p>
+    <p> <b>Initial Release:</b> 11/17/2020 </p>
     <p>&copy; 2020 <a href="#">DELAUNAYSPARSE</a></p>
 </div>
 

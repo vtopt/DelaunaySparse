@@ -66,7 +66,7 @@ This is version 2 of DELAUNAYSPARSE.
 
 In the latest version, we have switched away from using the SLATEC subroutine
 DWNNLS for computing projections onto the convex hull. Instead, we favor the
-BQPD quadratic program solver of R. Fletcher, which is much more robust for
+quadratic program solver BQPD of R. Fletcher, which is much more robust for
 large projection problems.
 
 Since this problem was somewhat nontrivial, we have added an additional
