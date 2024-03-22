@@ -240,18 +240,21 @@ def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 !
 ! Subroutines and functions directly referenced from BLAS are
@@ -621,18 +624,21 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 ! PMODE is an integer specifying the level of parallelism to be exploited.
 !    If PMODE = 1, then parallelism is exploited at the level of the loop

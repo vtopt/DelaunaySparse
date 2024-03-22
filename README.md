@@ -97,4 +97,4 @@ numpages = {20}
 ## Inquiries
 
 For further inquiries, contact
-Tyler Chang, tchang@anl.gov.
+Tyler Chang, thchang@vt.edu.
