@@ -78,20 +78,35 @@ external usage.
 To cite this work, please use
 
 ```
-@article{TOMSalg1012,
-author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
-title = {Algorithm 1012: {DELAUNAYSPARSE}: {I}nterpolation via a Sparse Subset of the {D}elaunay Triangulation in Medium to High Dimensions},
-year = {2020},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {46},
-number = {4},
-doi = {10.1145/3422818},
-journal = {ACM Trans. Math. Softw.},
-month = {nov},
-articleno = {38},
-numpages = {20}
+@article{TOMSalgorithm1012,
+    author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
+    title = {Algorithm 1012: {DELAUNAYSPARSE}: {I}nterpolation via a Sparse Subset of the {D}elaunay Triangulation in Medium to High Dimensions},
+    year = {2020},
+    month = {nov},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    journal = {ACM Trans. Math. Softw.},
+    volume = {46},
+    number = {4},
+    articleno = {38},
+    numpages = {20},
+    doi = {10.1145/3422818},
 }
+```
+
+The new ``PROJECT`` subroutine released in Version 2 is described in
+
+```
+@article{TOMSremark1012,
+    author = {Chang, Tyler H. and Watson, Layne T. and Leyffer, Sven and Lux, Thomas C. H. and Almohri, Hussain M. J.},
+    title = {Remark on {Algorithm 1012}: Computing projections with large data sets},
+    year = {2024},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    journal = {ACM Trans. Math. Softw.},
+    numpages = {7},
+    doi = {10.1145/3656581},
+    note = {In press}
 ```
 
 ## Inquiries
