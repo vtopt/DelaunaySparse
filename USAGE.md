@@ -172,18 +172,37 @@ On output:
     - 61 : A value that was judged appropriate later caused LAPACK to
            encounter a singularity. Try increasing the value of `EPS`.
 
-    The errors 70--72 were caused by the DWNNLS library from SLATEC, which
-    is only used during extrapolation. Note that there is a known issue
-    with this library, when it is linked against included public-domain
-    copy of BLAS/LAPACK, instead of an installed version
-    (i.e., `-lblas` `-llapack`).
+    The errors 70+ can occur during extrapolation outside the convex hull.
+    Errors 71+ are received from the solver BQPD and should never occur.
+    Since extrapolation has a much higher memory overhead than interpolation,
+    if one of these errors occurs, it is likely that your system does not have
+    sufficient memory to support extrapolation for the given problem size.
 
-    - 70 : Allocation error for the extrapolation work arrays.
-    - 71 : The SLATEC subroutine `DWNNLS` failed to converge during the
-           projection of an extrapolation point onto the convex hull.
-    - 72 : The SLATEC subroutine `DWNNLS` has reported a usage error.
+    - 70 : Allocation error for the extrapolation work arrays. Note that
+           extrapolation has a higher memory overhead than interpolation for
+           the current version.
+    - 71 : Unbounded problem detected. This error should never occur
+           unless there is a user error.
+    - 72 : bl(i) > bu(i) for some i This error should never occur
+           unless there is a user error.
+    - 73 : Infeasible problem detected in Phase 1 (should never occur).
+    - 74 : Incorrect setting of m, n, kmax, mlp, mode or tol. This is
+           extremely unlikely, but could indicate that the problem is
+           too large for usage of BQPD.
+    - 75 : Not enough space in lp. This error should not occur.
+           Double-check your usage, then contact authors if the issue
+           persists.
+    - 76 : Not enough space for reduced Hessian matrix (increase kmax).
+           This error should not occur. Double-check your usage, then
+           contact authors if the issue persists.
+    - 77 : Not enough space for sparse factors. This error should not
+           occur, but may indicate an un-anticipated problem size.
+           Double-check your usage then contact the authors if the issue
+           persists.
+    - 78 : Maximum number of unsuccessful restarts taken. This issue
+           should never occur since the projection problem is convex.
 
-   The errors 72, 80--83 should never occur, and likely indicate a
+   The errors 80--83 should never occur, and likely indicate a
    compiler bug or hardware failure.
 
     - 80 : The LAPACK subroutine `DGEQP3` has reported an illegal value.
@@ -253,18 +272,21 @@ Optional arguments:
 
  * `EXACT` is a logical input argument that determines whether the exact
    diameter should be computed and whether a check for duplicate data
-   points should be performed in advance. When `EXACT=.FALSE.`, the
-   diameter of `PTS` is approximated by twice the distance from the
-   barycenter of `PTS` to the farthest point in `PTS`, and no check is
-   done to find the closest pair of points, which could result in hard
-   to find bugs later on. When `EXACT=.TRUE.`, the exact diameter is
-   computed and an error is returned whenever PTS contains duplicate
-   values up to the precision `EPS`. By default `EXACT=.TRUE.`, but setting
-   `EXACT=.FALSE.` could result in significant speedup when `N` is large.
-   It is strongly recommended that most users leave `EXACT=.TRUE.`, as
+   points should be performed in advance. These checks are $O(N^2 D)$ time
+   complexity, while `DELAUNAYSPARSE` tends toward $O(N D^4)$ on average.
+   By default, `EXACT=.TRUE.` and the exact diameter is computed and an error
+   is returned whenever `PTS` contains duplicate values up to the precision
+   `EPS`. When `EXACT=.FALSE.`, the diameter of `PTS` is approximated by twice
+   the distance from the barycenter of `PTS` to the farthest point in `PTS`,
+   and no check is done to find the closest pair of points.
+   When `EXACT=.TRUE.`, `DELAUNAYSPARSE` could spend over 90% of runtime
+   calculating these constants, which are not critical to the `DELAUNAYSPARSE`
+   algorithm. In particular, this happens for large values of `N`. However,
    setting `EXACT=.FALSE.` could result in input errors that are difficult
-   to identify. Also, the diameter approximation could be wrong by up to
-   a factor of two.
+   to identify. It is recommended that users verify the input set `PTS`
+   and possibly rescale `PTS` manually while `EXACT=.TRUE.` Then, when
+   100% sure that `PTS` is valid, users may choose to set `EXACT=.FALSE.`
+   in production runs for large values of N to achieve massive speedups.
 
 
 Subroutines and functions directly referenced from BLAS are
@@ -278,16 +300,15 @@ and from LAPACK are
  * `DGETRS`,
  * `DORMQR`.
 
-The SLATEC subroutine
- * `DWNNLS` is also directly referenced.
+The BQPD driver
+ * `BQPD` is also directly referenced.
 
-`DWNNLS` and all its SLATEC dependencies have been slightly edited to
-comply with the Fortran 2008 standard, with all print statements and
-references to stderr being commented out. For a reference to `DWNNLS`,
-see ACM TOMS Algorithm 587 (Hanson and Haskell).
+`BQPD` and all its dependencies have been flattened into a single file `bqpd.f`.
+For a reference to `BQPD`, see
+   Annals of Operations Research, 46 : 307--334 (1993).
 The module `REAL_PRECISION` from HOMPACK90 (ACM TOMS Algorithm 777) is
-used for the real data type. The `REAL_PRECISION` module, `DELAUNAYSPARSES`,
-and `DWNNLS` and its dependencies comply with the Fortran 2008 standard.  
+used for the real data type. The `REAL_PRECISION` module, `DELAUNAYSPARSEP`,
+and `BQPD` and its dependencies comply with the Fortran 2008 standard.  
 
 ## DELAUNAYSPARSEP
 
@@ -415,18 +436,38 @@ On output:
     - 61 : A value that was judged appropriate later caused LAPACK to
            encounter a singularity. Try increasing the value of `EPS`.
 
-    The errors 70--72 were caused by the DWNNLS library from SLATEC, which
-    is only used during extrapolation. Note that there is a known issue
-    with this library, when it is linked against included public-domain
-    copy of BLAS/LAPACK, instead of an installed version
-    (i.e., `-lblas` `-llapack`).
+    The errors 70+ can occur during extrapolation outside the convex hull.
+    Errors 71+ are received from the solver BQPD and should never occur.
+    Since extrapolation has a much higher memory overhead than interpolation,
+    if one of these errors occurs, it is likely that your system does not have
+    sufficient memory to support extrapolation for the given problem size.
 
-    - 70 : Allocation error for the extrapolation work arrays.
-    - 71 : The SLATEC subroutine `DWNNLS` failed to converge during the
-           projection of an extrapolation point onto the convex hull.
-    - 72 : The SLATEC subroutine `DWNNLS` has reported a usage error.
+    - 70 : Allocation error for the extrapolation work arrays. Note that
+           extrapolation has a higher memory overhead than interpolation for
+           the current version.
+    - 71 : Unbounded problem detected. This error should never occur
+           unless there is a user error.
+    - 72 : bl(i) > bu(i) for some i This error should never occur
+           unless there is a user error.
+    - 73 : Infeasible problem detected in Phase 1 (should never occur).
+    - 74 : Incorrect setting of m, n, kmax, mlp, mode or tol. This is
+           extremely unlikely, but could indicate that the problem is
+           too large for usage of BQPD.
+    - 75 : Not enough space in lp. This error should not occur.
+           Double-check your usage, then contact authors if the issue
+           persists.
+    - 76 : Not enough space for reduced Hessian matrix (increase kmax).
+           This error should not occur. Double-check your usage, then
+           contact authors if the issue persists.
+    - 77 : Not enough space for sparse factors. This error should not
+           occur, but may indicate an un-anticipated problem size.
+           Double-check your usage then contact the authors if the issue
+           persists.
+    - 78 : Maximum number of unsuccessful restarts taken. This issue
+           should never occur since the projection problem is convex.
 
-   The errors 72, 80--83 should never occur, and likely indicate a
+
+   The errors 80--83 should never occur, and likely indicate a
    compiler bug or hardware failure.
 
     - 80 : The LAPACK subroutine `DGEQP3` has reported an illegal value.
@@ -500,18 +541,21 @@ Optional arguments:
 
  * `EXACT` is a logical input argument that determines whether the exact
    diameter should be computed and whether a check for duplicate data
-   points should be performed in advance. When `EXACT=.FALSE.`, the
-   diameter of `PTS` is approximated by twice the distance from the
-   barycenter of `PTS` to the farthest point in `PTS`, and no check is
-   done to find the closest pair of points, which could result in hard
-   to find bugs later on. When `EXACT=.TRUE.`, the exact diameter is
-   computed and an error is returned whenever PTS contains duplicate
-   values up to the precision `EPS`. By default `EXACT=.TRUE.`, but setting
-   `EXACT=.FALSE.` could result in significant speedup when `N` is large.
-   It is strongly recommended that most users leave `EXACT=.TRUE.`, as
+   points should be performed in advance. These checks are $O(N^2 D)$ time
+   complexity, while `DELAUNAYSPARSE` tends toward $O(N D^4)$ on average.
+   By default, `EXACT=.TRUE.` and the exact diameter is computed and an error
+   is returned whenever `PTS` contains duplicate values up to the precision
+   `EPS`. When `EXACT=.FALSE.`, the diameter of `PTS` is approximated by twice
+   the distance from the barycenter of `PTS` to the farthest point in `PTS`,
+   and no check is done to find the closest pair of points.
+   When `EXACT=.TRUE.`, `DELAUNAYSPARSE` could spend over 90% of runtime
+   calculating these constants, which are not critical to the `DELAUNAYSPARSE`
+   algorithm. In particular, this happens for large values of `N`. However,
    setting `EXACT=.FALSE.` could result in input errors that are difficult
-   to identify. Also, the diameter approximation could be wrong by up to
-   a factor of two.
+   to identify. It is recommended that users verify the input set `PTS`
+   and possibly rescale `PTS` manually while `EXACT=.TRUE.` Then, when
+   100% sure that `PTS` is valid, users may choose to set `EXACT=.FALSE.`
+   in production runs for large values of N to achieve massive speedups.
 
  * `PMODE` is an integer specifying the level of parallelism to be exploited.
     - If `PMODE = 1`, then parallelism is exploited at the level of the loop
@@ -537,13 +581,12 @@ and from LAPACK are
  * `DGETRS`,
  * `DORMQR`.
 
-The SLATEC subroutine
- * `DWNNLS` is also directly referenced.
+The BQPD driver
+ * `BQPD` is also directly referenced.
 
-`DWNNLS` and all its SLATEC dependencies have been slightly edited to
-comply with the Fortran 2008 standard, with all print statements and
-references to stderr being commented out. For a reference to `DWNNLS`,
-see ACM TOMS Algorithm 587 (Hanson and Haskell).
+`BQPD` and all its dependencies have been flattened into a single file `bqpd.f`.
+For a reference to `BQPD`, see
+   Annals of Operations Research, 46 : 307--334 (1993).
 The module `REAL_PRECISION` from HOMPACK90 (ACM TOMS Algorithm 777) is
 used for the real data type. The `REAL_PRECISION` module, `DELAUNAYSPARSEP`,
-and `DWNNLS` and its dependencies comply with the Fortran 2008 standard.  
+and `BQPD` and its dependencies comply with the Fortran 2008 standard.  

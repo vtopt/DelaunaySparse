@@ -36,10 +36,11 @@ Further detailed user information is documented in the `USAGE` document.
 
 The physical organization is as follows.
 
- * `src` contains the original unmodified Fortran source code, as published
-   in ACM TOMS Algorithm 1012. This includes 2 command line drivers
-   `samples.f90` (serial driver) and `samplep.f90` (parallel driver), which
-   can be used on formatted data files from the command line.
+ * `src` contains version 2 of the ACM TOMS Fortran source code, as published
+   in ACM TOMS Algorithm 1012 and modified in the subsequent remark.
+   This includes 2 command line drivers `samples.f90` (serial driver) and
+   `samplep.f90` (parallel driver), which can be used on formatted data files
+   from the command line.
    Comments at the top of each subroutine document their usage.
    See this directory's internal README for further information on
    building, testing, and usage.
@@ -59,28 +60,56 @@ The physical organization is as follows.
  * DelaunaySparse is shared under the MIT Software License, in the `LICENSE`
    file.
 
+## Version 2
+
+This is version 2 of DELAUNAYSPARSE.
+
+In the latest version, we have switched away from using the SLATEC subroutine
+DWNNLS for computing projections onto the convex hull. Instead, we favor the
+quadratic program solver BQPD of R. Fletcher, which is much more robust for
+large projection problems.
+
+Since this problem was somewhat nontrivial, we have added an additional
+external subroutine ``PROJECT`` to the ``delsparse.f90`` file, for
+external usage.
+
 ## Citation
 
 To cite this work, please use
 
 ```
-@article{TOMSalg1012,
-author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
-title = {Algorithm 1012: {DELAUNAYSPARSE}: {I}nterpolation via a Sparse Subset of the {D}elaunay Triangulation in Medium to High Dimensions},
-year = {2020},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {46},
-number = {4},
-doi = {10.1145/3422818},
-journal = {ACM Trans. Math. Softw.},
-month = {nov},
-articleno = {38},
-numpages = {20}
+@article{TOMSalgorithm1012,
+    author = {Chang, Tyler H. and Watson, Layne T. and Lux, Thomas C. H. and Butt, Ali R. and Cameron, Kirk W. and Hong, Yili},
+    title = {Algorithm 1012: {DELAUNAYSPARSE}: {I}nterpolation via a Sparse Subset of the {D}elaunay Triangulation in Medium to High Dimensions},
+    year = {2020},
+    month = {nov},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    journal = {ACM Trans. Math. Softw.},
+    volume = {46},
+    number = {4},
+    articleno = {38},
+    numpages = {20},
+    doi = {10.1145/3422818},
 }
+```
+
+The new ``PROJECT`` subroutine released in Version 2 is described in
+
+```
+@article{TOMSremark1012,
+    author = {Chang, Tyler H. and Watson, Layne T. and Leyffer, Sven and Lux, Thomas C. H. and Almohri, Hussain M. J.},
+    title = {Remark on {Algorithm 1012}: Computing projections with large data sets},
+    year = {2024},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    journal = {ACM Trans. Math. Softw.},
+    numpages = {7},
+    doi = {10.1145/3656581},
+    note = {In press}
 ```
 
 ## Inquiries
 
 For further inquiries, contact
-Tyler Chang, tchang@anl.gov.
+Tyler Chang, thchang@vt.edu.

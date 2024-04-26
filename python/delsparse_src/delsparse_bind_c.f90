@@ -8,61 +8,46 @@ SUBROUTINE C_DELAUNAYSPARSES(D, N, PTS_DIM_1, PTS_DIM_2, PTS, M, Q_DIM_1, Q_DIM_
 &1, WEIGHTS_DIM_2, WEIGHTS, IERR_DIM_1, IERR, INTERP_IN_PRESENT, INTERP_IN_DIM_1, INTERP_IN_DIM_2, INTERP_IN, INTERP_OUT_PRESENT, I&
 &NTERP_OUT_DIM_1, INTERP_OUT_DIM_2, INTERP_OUT, EPS_PRESENT, EPS, EXTRAP_PRESENT, EXTRAP, RNORM_PRESENT, RNORM_DIM_1, RNORM, IBUDGE&
 &T_PRESENT, IBUDGET, CHAIN_PRESENT, CHAIN, EXACT_PRESENT, EXACT) BIND(C)
-USE REAL_PRECISION , ONLY : R8
+  USE REAL_PRECISION , ONLY : R8
+  USE ISO_C_BINDING, ONLY: C_BOOL
   IMPLICIT NONE
-
   INTEGER, INTENT(IN) :: D
-
   INTEGER, INTENT(IN) :: N
-
-  INTEGER, INTENT(IN) :: PTS_DIM_1
-  INTEGER, INTENT(IN) :: PTS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_2
   REAL(KIND=R8), INTENT(INOUT), DIMENSION(PTS_DIM_1,PTS_DIM_2) :: PTS
-
   INTEGER, INTENT(IN) :: M
-
-  INTEGER, INTENT(IN) :: Q_DIM_1
-  INTEGER, INTENT(IN) :: Q_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: Q_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: Q_DIM_2
   REAL(KIND=R8), INTENT(INOUT), DIMENSION(Q_DIM_1,Q_DIM_2) :: Q
-
-  INTEGER, INTENT(IN) :: SIMPS_DIM_1
-  INTEGER, INTENT(IN) :: SIMPS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: SIMPS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: SIMPS_DIM_2
   INTEGER, INTENT(OUT), DIMENSION(SIMPS_DIM_1,SIMPS_DIM_2) :: SIMPS
-
-  INTEGER, INTENT(IN) :: WEIGHTS_DIM_1
-  INTEGER, INTENT(IN) :: WEIGHTS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: WEIGHTS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: WEIGHTS_DIM_2
   REAL(KIND=R8), INTENT(OUT), DIMENSION(WEIGHTS_DIM_1,WEIGHTS_DIM_2) :: WEIGHTS
-
-  INTEGER, INTENT(IN) :: IERR_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: IERR_DIM_1
   INTEGER, INTENT(OUT), DIMENSION(IERR_DIM_1) :: IERR
-
-  LOGICAL, INTENT(IN) :: INTERP_IN_PRESENT
-  INTEGER, INTENT(IN) :: INTERP_IN_DIM_1
-  INTEGER, INTENT(IN) :: INTERP_IN_DIM_2
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: INTERP_IN_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_IN_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_IN_DIM_2
   REAL(KIND=R8), INTENT(IN), DIMENSION(INTERP_IN_DIM_1,INTERP_IN_DIM_2) :: INTERP_IN
-
-  LOGICAL, INTENT(IN) :: INTERP_OUT_PRESENT
-  INTEGER, INTENT(IN) :: INTERP_OUT_DIM_1
-  INTEGER, INTENT(IN) :: INTERP_OUT_DIM_2
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: INTERP_OUT_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_OUT_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_OUT_DIM_2
   REAL(KIND=R8), INTENT(OUT), DIMENSION(INTERP_OUT_DIM_1,INTERP_OUT_DIM_2) :: INTERP_OUT
-
-  LOGICAL, INTENT(IN) :: EPS_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EPS_PRESENT
   REAL(KIND=R8), INTENT(IN) :: EPS
-
-  LOGICAL, INTENT(IN) :: EXTRAP_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EXTRAP_PRESENT
   REAL(KIND=R8), INTENT(IN) :: EXTRAP
-
-  LOGICAL, INTENT(IN) :: RNORM_PRESENT
-  INTEGER, INTENT(IN) :: RNORM_DIM_1
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: RNORM_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: RNORM_DIM_1
   REAL(KIND=R8), INTENT(OUT), DIMENSION(RNORM_DIM_1) :: RNORM
-
-  LOGICAL, INTENT(IN) :: IBUDGET_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: IBUDGET_PRESENT
   INTEGER, INTENT(IN) :: IBUDGET
-
-  LOGICAL, INTENT(IN) :: CHAIN_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: CHAIN_PRESENT
   LOGICAL, INTENT(IN) :: CHAIN
-
-  LOGICAL, INTENT(IN) :: EXACT_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EXACT_PRESENT
   LOGICAL, INTENT(IN) :: EXACT
 
   INTERFACE
@@ -169,12 +154,13 @@ USE REAL_PRECISION , ONLY : R8
       ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
       !      singularity. Try increasing the value of EPS.
       !
-      ! 70 : Allocation error for the extrapolation work arrays.
-      ! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-      !      of an extrapolation point onto the convex hull.
-      ! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+      ! 70 : Allocation error for the extrapolation work arrays. Note that
+      !      extrapolation has a higher memory overhead than interpolation for
+      !      the current version.
+      ! 7x : BQPD has reported an error while computing the projection. See the
+      !      comment block for the PROJECT subroutine for more details.
       !
-      !      The errors 72, 80--83 should never occur, and likely indicate a
+      !      The errors 80--83 should never occur, and likely indicate a
       !      compiler bug or hardware failure.
       ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
       ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
@@ -204,11 +190,11 @@ USE REAL_PRECISION , ONLY : R8
       !    simplices and convex combination weights are returned.
       !
       ! EPS contains the real working precision for the problem on input. By default,
-      !    EPS is assigned \sqrt{\mu} where \mu denotes the unit roundoff for the
+      !    EPS is assigned \sqrt{{\mu}} where \mu denotes the unit roundoff for the
       !    machine. In general, any values that differ by less than EPS are judged
       !    as equal, and any weights that are greater than -EPS are judged as
       !    nonnegative.  EPS cannot take a value less than the default value of
-      !    \sqrt{\mu}. If any value less than \sqrt{\mu} is supplied, the default
+      !    \sqrt{{\mu}}. If any value less than \sqrt{{\mu}} is supplied, the default
       !    value will be used instead automatically.
       !
       ! EXTRAP contains the real maximum extrapolation distance (relative to the
@@ -261,18 +247,18 @@ USE REAL_PRECISION , ONLY : R8
       !      DDOT, DGEMV, DNRM2, DTRSM,
       ! and from LAPACK are
       !      DGEQP3, DGETRF, DGETRS, DORMQR.
-      ! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-      ! SLATEC dependencies have been slightly edited to comply with the Fortran
-      ! 2008 standard, with all print statements and references to stderr being
-      ! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-      ! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-      ! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-      ! DELAUNAYSPARSES, and DWNNLS and its dependencies comply with the Fortran
-      ! 2008 standard.
+      ! The BQPD solver is also used. For more information, see
+      !      Annals of Operations Research, 46 : 307--334 (1993).
+      ! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+      ! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+      ! BQPD and its dependencies comply with the Fortran 2008 standard.
       !
-      ! Primary Author: Tyler H. Chang
-      ! Last Update: March, 2020
+      ! Primary Author: Tyler H. Chang (THC)
       !
+      ! Version history:
+      !
+      ! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+      ! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
       USE REAL_PRECISION , ONLY : R8
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: D
@@ -1566,64 +1552,48 @@ SUBROUTINE C_DELAUNAYSPARSEP(D, N, PTS_DIM_1, PTS_DIM_2, PTS, M, Q_DIM_1, Q_DIM_
 &1, WEIGHTS_DIM_2, WEIGHTS, IERR_DIM_1, IERR, INTERP_IN_PRESENT, INTERP_IN_DIM_1, INTERP_IN_DIM_2, INTERP_IN, INTERP_OUT_PRESENT, I&
 &NTERP_OUT_DIM_1, INTERP_OUT_DIM_2, INTERP_OUT, EPS_PRESENT, EPS, EXTRAP_PRESENT, EXTRAP, RNORM_PRESENT, RNORM_DIM_1, RNORM, IBUDGE&
 &T_PRESENT, IBUDGET, CHAIN_PRESENT, CHAIN, EXACT_PRESENT, EXACT, PMODE_PRESENT, PMODE) BIND(C)
-USE REAL_PRECISION , ONLY : R8
+  USE REAL_PRECISION , ONLY : R8
+  USE ISO_C_BINDING, ONLY: C_BOOL
   IMPLICIT NONE
-
   INTEGER, INTENT(IN) :: D
-
   INTEGER, INTENT(IN) :: N
-
-  INTEGER, INTENT(IN) :: PTS_DIM_1
-  INTEGER, INTENT(IN) :: PTS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_2
   REAL(KIND=R8), INTENT(INOUT), DIMENSION(PTS_DIM_1,PTS_DIM_2) :: PTS
-
   INTEGER, INTENT(IN) :: M
-
-  INTEGER, INTENT(IN) :: Q_DIM_1
-  INTEGER, INTENT(IN) :: Q_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: Q_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: Q_DIM_2
   REAL(KIND=R8), INTENT(INOUT), DIMENSION(Q_DIM_1,Q_DIM_2) :: Q
-
-  INTEGER, INTENT(IN) :: SIMPS_DIM_1
-  INTEGER, INTENT(IN) :: SIMPS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: SIMPS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: SIMPS_DIM_2
   INTEGER, INTENT(OUT), DIMENSION(SIMPS_DIM_1,SIMPS_DIM_2) :: SIMPS
-
-  INTEGER, INTENT(IN) :: WEIGHTS_DIM_1
-  INTEGER, INTENT(IN) :: WEIGHTS_DIM_2
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: WEIGHTS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: WEIGHTS_DIM_2
   REAL(KIND=R8), INTENT(OUT), DIMENSION(WEIGHTS_DIM_1,WEIGHTS_DIM_2) :: WEIGHTS
-
-  INTEGER, INTENT(IN) :: IERR_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: IERR_DIM_1
   INTEGER, INTENT(OUT), DIMENSION(IERR_DIM_1) :: IERR
-
-  LOGICAL, INTENT(IN) :: INTERP_IN_PRESENT
-  INTEGER, INTENT(IN) :: INTERP_IN_DIM_1
-  INTEGER, INTENT(IN) :: INTERP_IN_DIM_2
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: INTERP_IN_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_IN_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_IN_DIM_2
   REAL(KIND=R8), INTENT(IN), DIMENSION(INTERP_IN_DIM_1,INTERP_IN_DIM_2) :: INTERP_IN
-
-  LOGICAL, INTENT(IN) :: INTERP_OUT_PRESENT
-  INTEGER, INTENT(IN) :: INTERP_OUT_DIM_1
-  INTEGER, INTENT(IN) :: INTERP_OUT_DIM_2
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: INTERP_OUT_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_OUT_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: INTERP_OUT_DIM_2
   REAL(KIND=R8), INTENT(OUT), DIMENSION(INTERP_OUT_DIM_1,INTERP_OUT_DIM_2) :: INTERP_OUT
-
-  LOGICAL, INTENT(IN) :: EPS_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EPS_PRESENT
   REAL(KIND=R8), INTENT(IN) :: EPS
-
-  LOGICAL, INTENT(IN) :: EXTRAP_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EXTRAP_PRESENT
   REAL(KIND=R8), INTENT(IN) :: EXTRAP
-
-  LOGICAL, INTENT(IN) :: RNORM_PRESENT
-  INTEGER, INTENT(IN) :: RNORM_DIM_1
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: RNORM_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: RNORM_DIM_1
   REAL(KIND=R8), INTENT(OUT), DIMENSION(RNORM_DIM_1) :: RNORM
-
-  LOGICAL, INTENT(IN) :: IBUDGET_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: IBUDGET_PRESENT
   INTEGER, INTENT(IN) :: IBUDGET
-
-  LOGICAL, INTENT(IN) :: CHAIN_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: CHAIN_PRESENT
   LOGICAL, INTENT(IN) :: CHAIN
-
-  LOGICAL, INTENT(IN) :: EXACT_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EXACT_PRESENT
   LOGICAL, INTENT(IN) :: EXACT
-
-  LOGICAL, INTENT(IN) :: PMODE_PRESENT
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: PMODE_PRESENT
   INTEGER, INTENT(IN) :: PMODE
 
   INTERFACE
@@ -1730,10 +1700,11 @@ USE REAL_PRECISION , ONLY : R8
       ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
       !      singularity. Try increasing the value of EPS.
       !
-      ! 70 : Allocation error for the extrapolation work arrays.
-      ! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-      !      of an extrapolation point onto the convex hull.
-      ! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+      ! 70 : Allocation error for the extrapolation work arrays. Note that
+      !      extrapolation has a higher memory overhead than interpolation for
+      !      the current version.
+      ! 7x : BQPD has reported an error while computing the projection. See the
+      !      comment block for the PROJECT subroutine for more details.
       !
       !      The errors 72, 80--83 should never occur, and likely indicate a
       !      compiler bug or hardware failure.
@@ -1767,11 +1738,11 @@ USE REAL_PRECISION , ONLY : R8
       !    simplices and convex combination weights are returned.
       !
       ! EPS contains the real working precision for the problem on input. By
-      !    default, EPS is assigned \sqrt{\mu} where \mu denotes the unit roundoff
+      !    default, EPS is assigned \sqrt{{\mu}} where \mu denotes the unit roundoff
       !    for the machine. In general, any values that differ by less than EPS
       !    are judged as equal, and any weights that are greater than -EPS are
       !    judged as nonnegative.  EPS cannot take a value less than the default
-      !    value of \sqrt{\mu}. If any value less than \sqrt{\mu} is supplied,
+      !    value of \sqrt{{\mu}}. If any value less than \sqrt{{\mu}} is supplied,
       !    the default value will be used instead automatically.
       !
       ! EXTRAP contains the real maximum extrapolation distance (relative to the
@@ -1836,18 +1807,18 @@ USE REAL_PRECISION , ONLY : R8
       !      DDOT, DGEMV, DNRM2, DTRSM,
       ! and from LAPACK are
       !      DGEQP3, DGETRF, DGETRS, DORMQR.
-      ! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-      ! SLATEC dependencies have been slightly edited to comply with the Fortran
-      ! 2008 standard, with all print statements and references to stderr being
-      ! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-      ! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-      ! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-      ! DELAUNAYSPARSEP, and DWNNLS and its dependencies comply with the Fortran
-      ! 2008 standard.
+      ! The BQPD solver is also used. For more information, see
+      !      Annals of Operations Research, 46 : 307--334 (1993).
+      ! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+      ! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+      ! BQPD and its dependencies comply with the Fortran 2008 standard.
       !
-      ! Primary Author: Tyler H. Chang
-      ! Last Update: March, 2020
+      ! Primary Author: Tyler H. Chang (THC)
       !
+      ! Version history:
+      !
+      ! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+      ! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
       USE REAL_PRECISION , ONLY : R8
       IMPLICIT NONE
       INTEGER, INTENT(IN) :: D
@@ -4419,4 +4390,222 @@ USE REAL_PRECISION , ONLY : R8
     END IF
   END IF
 END SUBROUTINE C_DELAUNAYSPARSEP
+
+
+SUBROUTINE C_PROJECT(D, N, PTS_DIM_1, PTS_DIM_2, PTS, Z_DIM_1, Z, RNORM, IERR, EPS_PRESENT, EPS, WEIGHTS_PRESENT, WEIGHTS_DIM_1, WE&
+&IGHTS) BIND(C)
+  USE REAL_PRECISION , ONLY : R8
+  USE ISO_C_BINDING, ONLY: C_BOOL
+  IMPLICIT NONE
+  INTEGER, INTENT(IN) :: D
+  INTEGER, INTENT(IN) :: N
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_1
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: PTS_DIM_2
+  REAL(KIND=R8), INTENT(IN), DIMENSION(PTS_DIM_1,PTS_DIM_2) :: PTS
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: Z_DIM_1
+  REAL(KIND=R8), INTENT(INOUT), DIMENSION(Z_DIM_1) :: Z
+  REAL(KIND=R8), INTENT(OUT) :: RNORM
+  INTEGER, INTENT(OUT) :: IERR
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: EPS_PRESENT
+  REAL(KIND=R8), INTENT(IN) :: EPS
+  LOGICAL(KIND=C_BOOL), INTENT(IN) :: WEIGHTS_PRESENT
+  INTEGER(KIND=SELECTED_INT_KIND(18)), INTENT(IN) :: WEIGHTS_DIM_1
+  REAL(KIND=R8), INTENT(OUT), DIMENSION(WEIGHTS_DIM_1) :: WEIGHTS
+
+  INTERFACE
+    SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+      ! Project a point outside the convex hull of the point set onto the convex
+      ! hull by solving a non negatively constrained least squares problem with 1
+      ! equality constraint (an instance of the WNNLS problem):
+      !
+      !    min_X   || MATMUL(PTS, X) - Z ||   s.t.   X >= 0, SUM(X) == 1
+      !
+      ! The solution to the WNNLS problem stated above gives the projection Z_hat as
+      ! a convex combination of the data points:
+      !
+      !   Z_hat = MATMUL(PTS, X).
+      !
+      ! The above WNNLS problem is solved via R. Fletcher's QP solver: BQPD.
+      ! Compared to other existing (D)WNNLS solvers, BQPD's flexible nature allows
+      ! us to exploit the sparsity in the solution X, which should contain at most
+      ! D positive entries (inactive constraints).
+      !
+      !
+      ! On input:
+      !
+      ! D is the dimension of the space for PTS and Z.
+      !
+      ! N is the number of data points in PTS.
+      !
+      ! PTS(1:D, 1:N) is a real valued matrix with N columns, each containing the
+      !    coordinates of a single data point in R^D.
+      !
+      ! Z(1:D) is a real vector specifying the coordinates of a single
+      !    extrapolation point in R^D.
+      !
+      !
+      ! On output:
+      !
+      ! Z is overwritten with the result of the projection (labeled Z_hat above).
+      !
+      ! RNORM contains the norm of the residual vector || Z - Z_hat ||.
+      !
+      ! IERR contains an integer valued error flag (0=success) forwaded from BQPD.
+      !    Possible exit codes are listed below:
+      !
+      !       0 = solution obtained
+      !       1 = unbounded problem detected (f(x)<=fmin would occur)
+      !       2 = bl(i) > bu(i) for some i
+      !       3 = infeasible problem detected in Phase 1
+      !       4 = incorrect setting of m, n, kmax, mlp, mode or tol
+      !       5 = not enough space in lp
+      !       6 = not enough space for reduced Hessian matrix (increase kmax)
+      !       7 = not enough space for sparse factors (sparse code only)
+      !       8 = maximum number of unsuccessful restarts taken
+      !      -1 = a memory allocation error occurred (indicates the problem size is
+      !           too large for the additional memory overhead from extrapolation)
+      !
+      !
+      ! Optional arguments:
+      !
+      ! EPS contains the real working precision for the problem on input. By default,
+      !    EPS is assigned \sqrt{{\mu}} where \mu denotes the unit roundoff for the
+      !    machine. In general, any values that differ by less than EPS are judged
+      !    as equal, and any weights that are greater than -EPS are judged as
+      !    nonnegative.  EPS cannot take a value less than the default value of
+      !    \sqrt{{\mu}}. If any value less than \sqrt{{\mu}} is supplied, the default
+      !    value will be used instead automatically. Note that in order to ensure
+      !    that DELAUNAYSPARSE will be within tolerances, BQPD does not use the
+      !    value of EPS given here. Instead, BQPD is given a tolerance of
+      !    EPS ** 1.5.
+      !
+      ! WEIGHTS(N) is assigned the projection weights on output, when present.
+      !
+      !
+      ! Subroutines and functions directly referenced from BLAS are
+      !      DNRM2, DGEMV.
+      ! BQPD, its utility functions, and its sparse linear algebra library are
+      ! also referenced.
+      !
+      !
+      ! This work is from a modification to the driver for BQPD by R. Fletcher,
+      ! with modifications made by Tyler H. Chang (THC) and Sven Leyffer (SL).
+      !
+      !
+      ! Version history:
+      !
+      ! Version 1: Forked from BQPD by SL (Aug 2023)
+      !            Converted to f90 by THC (Sep 2023)
+      USE REAL_PRECISION , ONLY : R8
+      IMPLICIT NONE
+      INTEGER, INTENT(IN) :: D
+      INTEGER, INTENT(IN) :: N
+      REAL(KIND=R8), INTENT(IN), DIMENSION(:,:) :: PTS
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:) :: Z
+      REAL(KIND=R8), INTENT(OUT) :: RNORM
+      INTEGER, INTENT(OUT) :: IERR
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EPS
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:) :: WEIGHTS
+    END SUBROUTINE PROJECT
+  END INTERFACE
+
+  IF (EPS_PRESENT) THEN
+    IF (WEIGHTS_PRESENT) THEN
+      CALL PROJECT(D=D, N=N, PTS=PTS, Z=Z, RNORM=RNORM, IERR=IERR, EPS=EPS, WEIGHTS=WEIGHTS)
+    ELSE
+      CALL PROJECT(D=D, N=N, PTS=PTS, Z=Z, RNORM=RNORM, IERR=IERR, EPS=EPS)
+    END IF
+  ELSE
+    IF (WEIGHTS_PRESENT) THEN
+      CALL PROJECT(D=D, N=N, PTS=PTS, Z=Z, RNORM=RNORM, IERR=IERR, WEIGHTS=WEIGHTS)
+    ELSE
+      CALL PROJECT(D=D, N=N, PTS=PTS, Z=Z, RNORM=RNORM, IERR=IERR)
+    END IF
+  END IF
+END SUBROUTINE C_PROJECT
+
+
+MODULE C_REAL_PRECISION
+  IMPLICIT NONE
+
+
+CONTAINS
+
+
+  ! Getter and setter for R8.
+  SUBROUTINE REAL_PRECISION_GET_R8(R8_LOCAL) BIND(C)
+    USE REAL_PRECISION, ONLY: R8
+    INTEGER :: R8_LOCAL
+    R8_LOCAL = R8
+  END SUBROUTINE REAL_PRECISION_GET_R8
+END MODULE C_REAL_PRECISION
+
+
+MODULE C_DELSPARSE_MOD
+USE REAL_PRECISION
+  IMPLICIT NONE
+
+
+  INTERFACE
+    SUBROUTINE DELAUNAYSPARSES(D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, INTERP_IN, INTERP_OUT, EPS, EXTRAP, RNORM, IBUDGET, CHAIN, EX&
+&ACT)
+      USE REAL_PRECISION , ONLY : R8
+      INTEGER, INTENT(IN) :: D
+      INTEGER, INTENT(IN) :: N
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:,:) :: PTS
+      INTEGER, INTENT(IN) :: M
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:,:) :: Q
+      INTEGER, INTENT(OUT), DIMENSION(:,:) :: SIMPS
+      REAL(KIND=R8), INTENT(OUT), DIMENSION(:,:) :: WEIGHTS
+      INTEGER, INTENT(OUT), DIMENSION(:) :: IERR
+      REAL(KIND=R8), INTENT(IN), OPTIONAL, DIMENSION(:,:) :: INTERP_IN
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:,:) :: INTERP_OUT
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EPS
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EXTRAP
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:) :: RNORM
+      INTEGER, INTENT(IN), OPTIONAL :: IBUDGET
+      LOGICAL, INTENT(IN), OPTIONAL :: CHAIN
+      LOGICAL, INTENT(IN), OPTIONAL :: EXACT
+    END SUBROUTINE DELAUNAYSPARSES
+    SUBROUTINE DELAUNAYSPARSEP(D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, INTERP_IN, INTERP_OUT, EPS, EXTRAP, RNORM, IBUDGET, CHAIN, EX&
+&ACT, PMODE)
+      ! Interface for parallel subroutine DELAUNAYSPARSEP.
+      USE REAL_PRECISION , ONLY : R8
+      INTEGER, INTENT(IN) :: D
+      INTEGER, INTENT(IN) :: N
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:,:) :: PTS
+      INTEGER, INTENT(IN) :: M
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:,:) :: Q
+      INTEGER, INTENT(OUT), DIMENSION(:,:) :: SIMPS
+      REAL(KIND=R8), INTENT(OUT), DIMENSION(:,:) :: WEIGHTS
+      INTEGER, INTENT(OUT), DIMENSION(:) :: IERR
+      REAL(KIND=R8), INTENT(IN), OPTIONAL, DIMENSION(:,:) :: INTERP_IN
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:,:) :: INTERP_OUT
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EPS
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EXTRAP
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:) :: RNORM
+      INTEGER, INTENT(IN), OPTIONAL :: IBUDGET
+      LOGICAL, INTENT(IN), OPTIONAL :: CHAIN
+      LOGICAL, INTENT(IN), OPTIONAL :: EXACT
+      INTEGER, INTENT(IN), OPTIONAL :: PMODE
+    END SUBROUTINE DELAUNAYSPARSEP
+    SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+      ! Interface for the new PROJECT subroutine, added in version 2
+      ! to replace DWNNLS.
+      USE REAL_PRECISION , ONLY : R8
+      INTEGER, INTENT(IN) :: D
+      INTEGER, INTENT(IN) :: N
+      REAL(KIND=R8), INTENT(IN), DIMENSION(:,:) :: PTS
+      REAL(KIND=R8), INTENT(INOUT), DIMENSION(:) :: Z
+      REAL(KIND=R8), INTENT(OUT) :: RNORM
+      INTEGER, INTENT(OUT) :: IERR
+      REAL(KIND=R8), INTENT(IN), OPTIONAL :: EPS
+      REAL(KIND=R8), INTENT(OUT), OPTIONAL, DIMENSION(:) :: WEIGHTS
+    END SUBROUTINE PROJECT
+  
+  END INTERFACE
+
+CONTAINS
+
+END MODULE C_DELSPARSE_MOD
 

@@ -1,54 +1,67 @@
-# Python wrapper for DELAUNAYSPARSE using C interface.
+'''This Python code is an automatically generated wrapper
+for Fortran code made by 'fmodpy'. The original documentation
+for the Fortran source code follows.
+
+
+'''
+
 import os
-import ctypes 
-import numpy as np
+import ctypes
+import platform
+import numpy
 
 # --------------------------------------------------------------------
-#                        CONFIGURATION
+#               CONFIGURATION
 # 
-fort_compiler = "gfortran"
-shared_object_name = "delsparse_clib.so"
-source_dir = os.path.abspath(os.path.dirname(__file__))
-path_to_lib = os.path.join(source_dir, shared_object_name)
-compile_options = "-fPIC -shared -O3 -fopenmp -std=legacy"
-# ^^ 'fPIC' and 'shared' are required. 'O3' is for speed and 'fopenmp'
-#    is necessary for supporting CPU parallelism during execution.
-blas_lapack = "-lblas -llapack"
-blas_lapack = "delsparse_src/blas.f delsparse_src/lapack.f"
-# ^^ Use a local BLAS and LAPACK if available by commenting the second line
-#    above. The included "blas.f" and "lapack.f" are known to cause error 71
-#    during extrapolation, but there is no known resolution.
-ordered_dependencies = "delsparse_src/real_precision.f90 delsparse_src/slatec.f delsparse_src/delsparse.f90 delsparse_src/delsparse_bind_c.f90"
-# 
+_verbose = True
+_fort_compiler = "gfortran"
+_shared_object_name = "delsparse." + platform.machine() + ".so"
+_this_directory = os.path.dirname(os.path.abspath(__file__))
+_src_directory = os.path.join(_this_directory, "delsparse_src")
+_path_to_lib = os.path.join(_this_directory, _shared_object_name)
+_compile_options = ['-fPIC', '-shared', '-O3']
+_ordered_dependencies = ['bqpd_min/bqpd.f', 'lapack.f', 'blas.f', 'delsparse.f90', 'delsparse_bind_c.f90']
+_ordered_dependencies = [f"{_src_directory}/{di}" for di in _ordered_dependencies]
+_symbol_files = []# 
 # --------------------------------------------------------------------
-
-
+#               AUTO-COMPILING
+#
+# Try to import the prerequisite symbols for the compiled code.
+for _ in _symbol_files:
+    _ = ctypes.CDLL(os.path.join(_this_directory, _), mode=ctypes.RTLD_GLOBAL)
 # Try to import the existing object. If that fails, recompile and then try.
 try:
-    delsparse_clib = ctypes.CDLL(path_to_lib)
+    # Check to see if the source files have been modified and a recompilation is needed.
+    if (max(max([0]+[os.path.getmtime(os.path.realpath(os.path.join(_this_directory,_))) for _ in _symbol_files]),
+            max([0]+[os.path.getmtime(os.path.realpath(os.path.join(_this_directory,_))) for _ in _ordered_dependencies]))
+        > os.path.getmtime(_path_to_lib)):
+        print()
+        print("WARNING: Recompiling because the modification time of a source file is newer than the library.", flush=True)
+        print()
+        if os.path.exists(_path_to_lib):
+            os.remove(_path_to_lib)
+        raise NotImplementedError(f"The newest library code has not been compiled.")
+    # Import the library.
+    clib = ctypes.CDLL(_path_to_lib)
 except:
     # Remove the shared object if it exists, because it is faulty.
-    if os.path.exists(shared_object_name):
-        os.remove(shared_object_name)
-    # Warn the user if they are using a local blas and lapack that
-    # this is known to cause extrapolation errors.
-    if (blas_lapack == "blas.f lapack.f"):
-        import warnings
-        warnings.warn("\n  The provided 'blas.f' and 'lapack.f' are known to cause extrapolation errors."+
-                      "\n  Consider using local libraries via compiler flags instead (see config"+
-                      "\n  coments for 'blas_lapack' in '"+os.path.join(path_to_lib,__file__)+"').")
+    if os.path.exists(_shared_object_name):
+        os.remove(_shared_object_name)
     # Compile a new shared object.
-    command = " ".join([fort_compiler, compile_options, blas_lapack,
-                        ordered_dependencies, "-o", path_to_lib])
-    print("Running command")
-    print("  ", command)
-    os.system(command)
-    # Remove all ".mod" files that were created to reduce clutter.
-    all_mods = [f for f in os.listdir(os.curdir) if f[-4:] == ".mod"]
-    for m in all_mods: os.remove(m)
+    _command = " ".join([_fort_compiler] + _compile_options + ["-o", _shared_object_name] + _ordered_dependencies)
+    if _verbose:
+        print("Running system command with arguments")
+        print("  ", _command)
+    # Run the compilation command.
+    import subprocess
+    subprocess.run(_command, shell=True, cwd=_this_directory)
+    # Import the shared object file as a C library with ctypes.
+    clib = ctypes.CDLL(_path_to_lib)
+# --------------------------------------------------------------------
 
-# Import the shared object file as a C library with ctypes.
-delsparse_clib = ctypes.CDLL(path_to_lib)
+
+# ----------------------------------------------
+# Wrapper for the Fortran subroutine DELAUNAYSPARSES
 
 def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, interp_out=None, eps=None, extrap=None, rnorm=None, ibudget=None, chain=None, exact=None):
     '''! This is a serial implementation of an algorithm for efficiently performing
@@ -152,12 +165,13 @@ def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
-!      The errors 72, 80--83 should never occur, and likely indicate a
+!      The errors 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
 ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
 ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
@@ -226,170 +240,206 @@ def delaunaysparses(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 !
 ! Subroutines and functions directly referenced from BLAS are
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSES, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 !
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
-!'''
-
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)'''
+    
     # Setting up "d"
-    d = ctypes.c_int(d)
-
+    if (type(d) is not ctypes.c_int): d = ctypes.c_int(d)
+    
     # Setting up "n"
-    n = ctypes.c_int(n)
-
-    # Setting up "m"
-    m = ctypes.c_int(m)
-
+    if (type(n) is not ctypes.c_int): n = ctypes.c_int(n)
+    
     # Setting up "pts"
-    pts_local = np.asarray(pts, dtype=ctypes.c_double)
-    pts_dim_1 = ctypes.c_int(pts_local.shape[0])
-    pts_dim_2 = ctypes.c_int(pts_local.shape[1])
+    if ((not issubclass(type(pts), numpy.ndarray)) or
+        (not numpy.asarray(pts).flags.f_contiguous) or
+        (not (pts.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'pts' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        pts = numpy.asarray(pts, dtype=ctypes.c_double, order='F')
+    pts_dim_1 = ctypes.c_long(pts.shape[0])
+    pts_dim_2 = ctypes.c_long(pts.shape[1])
+    
+    # Setting up "m"
+    if (type(m) is not ctypes.c_int): m = ctypes.c_int(m)
     
     # Setting up "q"
-    q_local = np.asarray(q, dtype=ctypes.c_double)
-    q_dim_1 = ctypes.c_int(q_local.shape[0])
-    q_dim_2 = ctypes.c_int(q_local.shape[1])
+    if ((not issubclass(type(q), numpy.ndarray)) or
+        (not numpy.asarray(q).flags.f_contiguous) or
+        (not (q.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'q' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        q = numpy.asarray(q, dtype=ctypes.c_double, order='F')
+    q_dim_1 = ctypes.c_long(q.shape[0])
+    q_dim_2 = ctypes.c_long(q.shape[1])
     
     # Setting up "simps"
-    simps_local = np.asarray(simps, dtype=ctypes.c_int)
-    simps_dim_1 = ctypes.c_int(simps_local.shape[0])
-    simps_dim_2 = ctypes.c_int(simps_local.shape[1])
+    if ((not issubclass(type(simps), numpy.ndarray)) or
+        (not numpy.asarray(simps).flags.f_contiguous) or
+        (not (simps.dtype == numpy.dtype(ctypes.c_int)))):
+        import warnings
+        warnings.warn("The provided argument 'simps' was not an f_contiguous NumPy array of type 'ctypes.c_int' (or equivalent). Automatically converting (probably creating a full copy).")
+        simps = numpy.asarray(simps, dtype=ctypes.c_int, order='F')
+    simps_dim_1 = ctypes.c_long(simps.shape[0])
+    simps_dim_2 = ctypes.c_long(simps.shape[1])
     
     # Setting up "weights"
-    weights_local = np.asarray(weights, dtype=ctypes.c_double)
-    weights_dim_1 = ctypes.c_int(weights_local.shape[0])
-    weights_dim_2 = ctypes.c_int(weights_local.shape[1])
+    if ((not issubclass(type(weights), numpy.ndarray)) or
+        (not numpy.asarray(weights).flags.f_contiguous) or
+        (not (weights.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'weights' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        weights = numpy.asarray(weights, dtype=ctypes.c_double, order='F')
+    weights_dim_1 = ctypes.c_long(weights.shape[0])
+    weights_dim_2 = ctypes.c_long(weights.shape[1])
     
     # Setting up "ierr"
-    ierr_local = np.asarray(ierr, dtype=ctypes.c_int)
-    # In accordance with how the Fortran code might be normally used,
-    #  and mathematical notation, grabbing the last dimension allows
-    #  ierr to be passed as a column vector instead of a flat vector.
-    ierr_dim_1 = ctypes.c_int(ierr_local.shape[-1])
+    if ((not issubclass(type(ierr), numpy.ndarray)) or
+        (not numpy.asarray(ierr).flags.f_contiguous) or
+        (not (ierr.dtype == numpy.dtype(ctypes.c_int)))):
+        import warnings
+        warnings.warn("The provided argument 'ierr' was not an f_contiguous NumPy array of type 'ctypes.c_int' (or equivalent). Automatically converting (probably creating a full copy).")
+        ierr = numpy.asarray(ierr, dtype=ctypes.c_int, order='F')
+    ierr_dim_1 = ctypes.c_long(ierr.shape[0])
     
     # Setting up "interp_in"
     interp_in_present = ctypes.c_bool(True)
-    interp_in_dim_1 = ctypes.c_int(0)
-    interp_in_dim_2 = ctypes.c_int(0)
     if (interp_in is None):
         interp_in_present = ctypes.c_bool(False)
-        interp_in = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+        interp_in = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
     elif (type(interp_in) == bool) and (interp_in):
-        interp_in = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
-        interp_in_dim_1 = ctypes.c_int(interp_in.shape[0])
-        interp_in_dim_2 = ctypes.c_int(interp_in.shape[1])
-    elif (not np.asarray(interp_in).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'interp_in' was not f_contiguous."))
+        interp_in = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(interp_in), numpy.ndarray)) or
+          (not numpy.asarray(interp_in).flags.f_contiguous) or
+          (not (interp_in.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'interp_in' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        interp_in = numpy.asarray(interp_in, dtype=ctypes.c_double, order='F')
+    if (interp_in_present):
+        interp_in_dim_1 = ctypes.c_long(interp_in.shape[0])
+        interp_in_dim_2 = ctypes.c_long(interp_in.shape[1])
     else:
-        interp_in_dim_1 = ctypes.c_int(interp_in.shape[0])
-        interp_in_dim_2 = ctypes.c_int(interp_in.shape[1])
-    interp_in_local = np.asarray(interp_in, dtype=ctypes.c_double)
+        interp_in_dim_1 = ctypes.c_long()
+        interp_in_dim_2 = ctypes.c_long()
     
     # Setting up "interp_out"
     interp_out_present = ctypes.c_bool(True)
-    interp_out_dim_1 = ctypes.c_int(0)
-    interp_out_dim_2 = ctypes.c_int(0)
     if (interp_out is None):
         interp_out_present = ctypes.c_bool(False)
-        interp_out = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+        interp_out = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
     elif (type(interp_out) == bool) and (interp_out):
-        interp_out = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
-        interp_out_dim_1 = ctypes.c_int(interp_out.shape[0])
-        interp_out_dim_2 = ctypes.c_int(interp_out.shape[1])
-    elif (not np.asarray(interp_out).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'interp_out' was not f_contiguous."))
+        interp_out = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(interp_out), numpy.ndarray)) or
+          (not numpy.asarray(interp_out).flags.f_contiguous) or
+          (not (interp_out.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'interp_out' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        interp_out = numpy.asarray(interp_out, dtype=ctypes.c_double, order='F')
+    if (interp_out_present):
+        interp_out_dim_1 = ctypes.c_long(interp_out.shape[0])
+        interp_out_dim_2 = ctypes.c_long(interp_out.shape[1])
     else:
-        interp_out_dim_1 = ctypes.c_int(interp_out.shape[0])
-        interp_out_dim_2 = ctypes.c_int(interp_out.shape[1])
-    interp_out_local = np.asarray(interp_out, dtype=ctypes.c_double)
+        interp_out_dim_1 = ctypes.c_long()
+        interp_out_dim_2 = ctypes.c_long()
     
     # Setting up "eps"
     eps_present = ctypes.c_bool(True)
     if (eps is None):
         eps_present = ctypes.c_bool(False)
-        eps = 1
-    eps_local = ctypes.c_double(eps)
+        eps = ctypes.c_double()
+    else:
+        eps = ctypes.c_double(eps)
+    if (type(eps) is not ctypes.c_double): eps = ctypes.c_double(eps)
     
     # Setting up "extrap"
     extrap_present = ctypes.c_bool(True)
     if (extrap is None):
         extrap_present = ctypes.c_bool(False)
-        extrap = 1
-    extrap_local = ctypes.c_double(extrap)
+        extrap = ctypes.c_double()
+    else:
+        extrap = ctypes.c_double(extrap)
+    if (type(extrap) is not ctypes.c_double): extrap = ctypes.c_double(extrap)
     
     # Setting up "rnorm"
     rnorm_present = ctypes.c_bool(True)
-    rnorm_dim_1 = ctypes.c_int(0)
     if (rnorm is None):
         rnorm_present = ctypes.c_bool(False)
-        rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+        rnorm = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
     elif (type(rnorm) == bool) and (rnorm):
-        # In accordance with how the Fortran code might be normally used,
-        #  and mathematical notation, grabbing the last dimension allows
-        #  rnorm to be passed as a column vector instead of a flat vector.
-        rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
-    elif (not np.asarray(rnorm).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'rnorm' was not f_contiguous."))
+        rnorm = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(rnorm), numpy.ndarray)) or
+          (not numpy.asarray(rnorm).flags.f_contiguous) or
+          (not (rnorm.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'rnorm' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        rnorm = numpy.asarray(rnorm, dtype=ctypes.c_double, order='F')
+    if (rnorm_present):
+        rnorm_dim_1 = ctypes.c_long(rnorm.shape[0])
     else:
-        # In accordance with how the Fortran code might be normally used,
-        #  and mathematical notation, grabbing the last dimension allows
-        #  rnorm to be passed as a column vector instead of a flat vector.
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
-    rnorm_local = np.asarray(rnorm, dtype=ctypes.c_double)
+        rnorm_dim_1 = ctypes.c_long()
     
     # Setting up "ibudget"
     ibudget_present = ctypes.c_bool(True)
     if (ibudget is None):
         ibudget_present = ctypes.c_bool(False)
-        ibudget = 1
-    ibudget_local = ctypes.c_int(ibudget)
+        ibudget = ctypes.c_int()
+    else:
+        ibudget = ctypes.c_int(ibudget)
+    if (type(ibudget) is not ctypes.c_int): ibudget = ctypes.c_int(ibudget)
     
     # Setting up "chain"
     chain_present = ctypes.c_bool(True)
     if (chain is None):
         chain_present = ctypes.c_bool(False)
-        chain = 1
-    chain_local = ctypes.c_bool(chain)
+        chain = ctypes.c_int()
+    else:
+        chain = ctypes.c_int(chain)
+    if (type(chain) is not ctypes.c_int): chain = ctypes.c_int(chain)
     
     # Setting up "exact"
     exact_present = ctypes.c_bool(True)
     if (exact is None):
         exact_present = ctypes.c_bool(False)
-        exact = 1
-    exact_local = ctypes.c_bool(exact)
+        exact = ctypes.c_int()
+    else:
+        exact = ctypes.c_int(exact)
+    if (type(exact) is not ctypes.c_int): exact = ctypes.c_int(exact)
 
     # Call C-accessible Fortran wrapper.
-    delsparse_clib.c_delaunaysparses(ctypes.byref(d), ctypes.byref(n), ctypes.byref(pts_dim_1), ctypes.byref(pts_dim_2), ctypes.c_void_p(pts_local.ctypes.data), ctypes.byref(m), ctypes.byref(q_dim_1), ctypes.byref(q_dim_2), ctypes.c_void_p(q_local.ctypes.data), ctypes.byref(simps_dim_1), ctypes.byref(simps_dim_2), ctypes.c_void_p(simps_local.ctypes.data), ctypes.byref(weights_dim_1), ctypes.byref(weights_dim_2), ctypes.c_void_p(weights_local.ctypes.data), ctypes.byref(ierr_dim_1), ctypes.c_void_p(ierr_local.ctypes.data), ctypes.byref(interp_in_present), ctypes.byref(interp_in_dim_1), ctypes.byref(interp_in_dim_2), ctypes.c_void_p(interp_in_local.ctypes.data), ctypes.byref(interp_out_present), ctypes.byref(interp_out_dim_1), ctypes.byref(interp_out_dim_2), ctypes.c_void_p(interp_out_local.ctypes.data), ctypes.byref(eps_present), ctypes.byref(eps_local), ctypes.byref(extrap_present), ctypes.byref(extrap_local), ctypes.byref(rnorm_present), ctypes.byref(rnorm_dim_1), ctypes.c_void_p(rnorm_local.ctypes.data), ctypes.byref(ibudget_present), ctypes.byref(ibudget_local), ctypes.byref(chain_present), ctypes.byref(chain_local), ctypes.byref(exact_present), ctypes.byref(exact_local))
+    clib.c_delaunaysparses(ctypes.byref(d), ctypes.byref(n), ctypes.byref(pts_dim_1), ctypes.byref(pts_dim_2), ctypes.c_void_p(pts.ctypes.data), ctypes.byref(m), ctypes.byref(q_dim_1), ctypes.byref(q_dim_2), ctypes.c_void_p(q.ctypes.data), ctypes.byref(simps_dim_1), ctypes.byref(simps_dim_2), ctypes.c_void_p(simps.ctypes.data), ctypes.byref(weights_dim_1), ctypes.byref(weights_dim_2), ctypes.c_void_p(weights.ctypes.data), ctypes.byref(ierr_dim_1), ctypes.c_void_p(ierr.ctypes.data), ctypes.byref(interp_in_present), ctypes.byref(interp_in_dim_1), ctypes.byref(interp_in_dim_2), ctypes.c_void_p(interp_in.ctypes.data), ctypes.byref(interp_out_present), ctypes.byref(interp_out_dim_1), ctypes.byref(interp_out_dim_2), ctypes.c_void_p(interp_out.ctypes.data), ctypes.byref(eps_present), ctypes.byref(eps), ctypes.byref(extrap_present), ctypes.byref(extrap), ctypes.byref(rnorm_present), ctypes.byref(rnorm_dim_1), ctypes.c_void_p(rnorm.ctypes.data), ctypes.byref(ibudget_present), ctypes.byref(ibudget), ctypes.byref(chain_present), ctypes.byref(chain), ctypes.byref(exact_present), ctypes.byref(exact))
 
     # Return final results, 'INTENT(OUT)' arguments only.
-    return np.asarray(pts_local), np.asarray(q_local), np.asarray(simps_local), np.asarray(weights_local), np.asarray(ierr_local), (np.asarray(interp_out_local) if interp_out_present else None), (np.asarray(rnorm_local) if rnorm_present else None)
+    return pts, q, simps, weights, ierr, (interp_out if interp_out_present else None), (rnorm if rnorm_present else None)
 
 
 # ----------------------------------------------
@@ -497,10 +547,11 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
 !      The errors 72, 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
@@ -573,18 +624,21 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 ! PMODE is an integer specifying the level of parallelism to be exploited.
 !    If PMODE = 1, then parallelism is exploited at the level of the loop
@@ -603,157 +657,443 @@ def delaunaysparsep(d, n, pts, m, q, simps, weights, ierr, interp_in=None, inter
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSEP, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 !
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
-!'''
-
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)'''
+    
     # Setting up "d"
-    d = ctypes.c_int(d)
-
+    if (type(d) is not ctypes.c_int): d = ctypes.c_int(d)
+    
     # Setting up "n"
-    n = ctypes.c_int(n)
-
-    # Setting up "m"
-    m = ctypes.c_int(m)
-
+    if (type(n) is not ctypes.c_int): n = ctypes.c_int(n)
+    
     # Setting up "pts"
-    pts_local = np.asarray(pts, dtype=ctypes.c_double)
-    pts_dim_1 = ctypes.c_int(pts_local.shape[0])
-    pts_dim_2 = ctypes.c_int(pts_local.shape[1])
+    if ((not issubclass(type(pts), numpy.ndarray)) or
+        (not numpy.asarray(pts).flags.f_contiguous) or
+        (not (pts.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'pts' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        pts = numpy.asarray(pts, dtype=ctypes.c_double, order='F')
+    pts_dim_1 = ctypes.c_long(pts.shape[0])
+    pts_dim_2 = ctypes.c_long(pts.shape[1])
+    
+    # Setting up "m"
+    if (type(m) is not ctypes.c_int): m = ctypes.c_int(m)
     
     # Setting up "q"
-    q_local = np.asarray(q, dtype=ctypes.c_double)
-    q_dim_1 = ctypes.c_int(q_local.shape[0])
-    q_dim_2 = ctypes.c_int(q_local.shape[1])
+    if ((not issubclass(type(q), numpy.ndarray)) or
+        (not numpy.asarray(q).flags.f_contiguous) or
+        (not (q.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'q' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        q = numpy.asarray(q, dtype=ctypes.c_double, order='F')
+    q_dim_1 = ctypes.c_long(q.shape[0])
+    q_dim_2 = ctypes.c_long(q.shape[1])
     
     # Setting up "simps"
-    simps_local = np.asarray(simps, dtype=ctypes.c_int)
-    simps_dim_1 = ctypes.c_int(simps_local.shape[0])
-    simps_dim_2 = ctypes.c_int(simps_local.shape[1])
+    if ((not issubclass(type(simps), numpy.ndarray)) or
+        (not numpy.asarray(simps).flags.f_contiguous) or
+        (not (simps.dtype == numpy.dtype(ctypes.c_int)))):
+        import warnings
+        warnings.warn("The provided argument 'simps' was not an f_contiguous NumPy array of type 'ctypes.c_int' (or equivalent). Automatically converting (probably creating a full copy).")
+        simps = numpy.asarray(simps, dtype=ctypes.c_int, order='F')
+    simps_dim_1 = ctypes.c_long(simps.shape[0])
+    simps_dim_2 = ctypes.c_long(simps.shape[1])
     
     # Setting up "weights"
-    weights_local = np.asarray(weights, dtype=ctypes.c_double)
-    weights_dim_1 = ctypes.c_int(weights_local.shape[0])
-    weights_dim_2 = ctypes.c_int(weights_local.shape[1])
+    if ((not issubclass(type(weights), numpy.ndarray)) or
+        (not numpy.asarray(weights).flags.f_contiguous) or
+        (not (weights.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'weights' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        weights = numpy.asarray(weights, dtype=ctypes.c_double, order='F')
+    weights_dim_1 = ctypes.c_long(weights.shape[0])
+    weights_dim_2 = ctypes.c_long(weights.shape[1])
     
     # Setting up "ierr"
-    ierr_local = np.asarray(ierr, dtype=ctypes.c_int)
-    # In accordance with how the Fortran code might be normally used,
-    #  and mathematical notation, grabbing the last dimension allows
-    #  ierr to be passed as a column vector instead of a flat vector.
-    ierr_dim_1 = ctypes.c_int(ierr_local.shape[-1])
+    if ((not issubclass(type(ierr), numpy.ndarray)) or
+        (not numpy.asarray(ierr).flags.f_contiguous) or
+        (not (ierr.dtype == numpy.dtype(ctypes.c_int)))):
+        import warnings
+        warnings.warn("The provided argument 'ierr' was not an f_contiguous NumPy array of type 'ctypes.c_int' (or equivalent). Automatically converting (probably creating a full copy).")
+        ierr = numpy.asarray(ierr, dtype=ctypes.c_int, order='F')
+    ierr_dim_1 = ctypes.c_long(ierr.shape[0])
     
     # Setting up "interp_in"
     interp_in_present = ctypes.c_bool(True)
-    interp_in_dim_1 = ctypes.c_int(0)
-    interp_in_dim_2 = ctypes.c_int(0)
     if (interp_in is None):
         interp_in_present = ctypes.c_bool(False)
-        interp_in = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+        interp_in = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
     elif (type(interp_in) == bool) and (interp_in):
-        interp_in = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
-        interp_in_dim_1 = ctypes.c_int(interp_in.shape[0])
-        interp_in_dim_2 = ctypes.c_int(interp_in.shape[1])
-    elif (not np.asarray(interp_in).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'interp_in' was not f_contiguous."))
+        interp_in = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(interp_in), numpy.ndarray)) or
+          (not numpy.asarray(interp_in).flags.f_contiguous) or
+          (not (interp_in.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'interp_in' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        interp_in = numpy.asarray(interp_in, dtype=ctypes.c_double, order='F')
+    if (interp_in_present):
+        interp_in_dim_1 = ctypes.c_long(interp_in.shape[0])
+        interp_in_dim_2 = ctypes.c_long(interp_in.shape[1])
     else:
-        interp_in_dim_1 = ctypes.c_int(interp_in.shape[0])
-        interp_in_dim_2 = ctypes.c_int(interp_in.shape[1])
-    interp_in_local = np.asarray(interp_in, dtype=ctypes.c_double)
+        interp_in_dim_1 = ctypes.c_long()
+        interp_in_dim_2 = ctypes.c_long()
     
     # Setting up "interp_out"
     interp_out_present = ctypes.c_bool(True)
-    interp_out_dim_1 = ctypes.c_int(0)
-    interp_out_dim_2 = ctypes.c_int(0)
     if (interp_out is None):
         interp_out_present = ctypes.c_bool(False)
-        interp_out = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+        interp_out = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
     elif (type(interp_out) == bool) and (interp_out):
-        interp_out = np.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
-        interp_out_dim_1 = ctypes.c_int(interp_out.shape[0])
-        interp_out_dim_2 = ctypes.c_int(interp_out.shape[1])
-    elif (not np.asarray(interp_out).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'interp_out' was not f_contiguous."))
+        interp_out = numpy.zeros(shape=(1,1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(interp_out), numpy.ndarray)) or
+          (not numpy.asarray(interp_out).flags.f_contiguous) or
+          (not (interp_out.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'interp_out' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        interp_out = numpy.asarray(interp_out, dtype=ctypes.c_double, order='F')
+    if (interp_out_present):
+        interp_out_dim_1 = ctypes.c_long(interp_out.shape[0])
+        interp_out_dim_2 = ctypes.c_long(interp_out.shape[1])
     else:
-        interp_out_dim_1 = ctypes.c_int(interp_out.shape[0])
-        interp_out_dim_2 = ctypes.c_int(interp_out.shape[1])
-    interp_out_local = np.asarray(interp_out, dtype=ctypes.c_double)
+        interp_out_dim_1 = ctypes.c_long()
+        interp_out_dim_2 = ctypes.c_long()
     
     # Setting up "eps"
     eps_present = ctypes.c_bool(True)
     if (eps is None):
         eps_present = ctypes.c_bool(False)
-        eps = 1
-    eps_local = ctypes.c_double(eps)
+        eps = ctypes.c_double()
+    else:
+        eps = ctypes.c_double(eps)
+    if (type(eps) is not ctypes.c_double): eps = ctypes.c_double(eps)
     
     # Setting up "extrap"
     extrap_present = ctypes.c_bool(True)
     if (extrap is None):
         extrap_present = ctypes.c_bool(False)
-        extrap = 1
-    extrap_local = ctypes.c_double(extrap)
+        extrap = ctypes.c_double()
+    else:
+        extrap = ctypes.c_double(extrap)
+    if (type(extrap) is not ctypes.c_double): extrap = ctypes.c_double(extrap)
     
     # Setting up "rnorm"
     rnorm_present = ctypes.c_bool(True)
-    rnorm_dim_1 = ctypes.c_int(0)
     if (rnorm is None):
         rnorm_present = ctypes.c_bool(False)
-        rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+        rnorm = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
     elif (type(rnorm) == bool) and (rnorm):
-        rnorm = np.zeros(shape=(1), dtype=ctypes.c_double, order='F')
-        # In accordance with how the Fortran code might be normally used,
-        #  and mathematical notation, grabbing the last dimension allows
-        #  rnorm to be passed as a column vector instead of a flat vector.
-        rnorm_dim_1 = rnorm.shape[-1]
-    elif (not np.asarray(rnorm).flags.f_contiguous):
-        raise(Exception("The numpy array given as argument 'rnorm' was not f_contiguous."))
+        rnorm = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(rnorm), numpy.ndarray)) or
+          (not numpy.asarray(rnorm).flags.f_contiguous) or
+          (not (rnorm.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'rnorm' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        rnorm = numpy.asarray(rnorm, dtype=ctypes.c_double, order='F')
+    if (rnorm_present):
+        rnorm_dim_1 = ctypes.c_long(rnorm.shape[0])
     else:
-        # In accordance with how the Fortran code might be normally used,
-        #  and mathematical notation, grabbing the last dimension allows
-        #  rnorm to be passed as a column vector instead of a flat vector.
-        rnorm_dim_1 = ctypes.c_int(rnorm.shape[-1])
-    rnorm_local = np.asarray(rnorm, dtype=ctypes.c_double)
+        rnorm_dim_1 = ctypes.c_long()
     
     # Setting up "ibudget"
     ibudget_present = ctypes.c_bool(True)
     if (ibudget is None):
         ibudget_present = ctypes.c_bool(False)
-        ibudget = 1
-    ibudget_local = ctypes.c_int(ibudget)
+        ibudget = ctypes.c_int()
+    else:
+        ibudget = ctypes.c_int(ibudget)
+    if (type(ibudget) is not ctypes.c_int): ibudget = ctypes.c_int(ibudget)
     
     # Setting up "chain"
     chain_present = ctypes.c_bool(True)
     if (chain is None):
         chain_present = ctypes.c_bool(False)
-        chain = 1
-    chain_local = ctypes.c_bool(chain)
+        chain = ctypes.c_int()
+    else:
+        chain = ctypes.c_int(chain)
+    if (type(chain) is not ctypes.c_int): chain = ctypes.c_int(chain)
     
     # Setting up "exact"
     exact_present = ctypes.c_bool(True)
     if (exact is None):
         exact_present = ctypes.c_bool(False)
-        exact = 1
-    exact_local = ctypes.c_bool(exact)
-
+        exact = ctypes.c_int()
+    else:
+        exact = ctypes.c_int(exact)
+    if (type(exact) is not ctypes.c_int): exact = ctypes.c_int(exact)
+    
     # Setting up "pmode"
     pmode_present = ctypes.c_bool(True)
     if (pmode is None):
         pmode_present = ctypes.c_bool(False)
-        pmode = 1
-    pmode_local = ctypes.c_int(pmode)
+        pmode = ctypes.c_int()
+    else:
+        pmode = ctypes.c_int(pmode)
+    if (type(pmode) is not ctypes.c_int): pmode = ctypes.c_int(pmode)
 
     # Call C-accessible Fortran wrapper.
-    delsparse_clib.c_delaunaysparsep(ctypes.byref(d), ctypes.byref(n), ctypes.byref(pts_dim_1), ctypes.byref(pts_dim_2), ctypes.c_void_p(pts_local.ctypes.data), ctypes.byref(m), ctypes.byref(q_dim_1), ctypes.byref(q_dim_2), ctypes.c_void_p(q_local.ctypes.data), ctypes.byref(simps_dim_1), ctypes.byref(simps_dim_2), ctypes.c_void_p(simps_local.ctypes.data), ctypes.byref(weights_dim_1), ctypes.byref(weights_dim_2), ctypes.c_void_p(weights_local.ctypes.data), ctypes.byref(ierr_dim_1), ctypes.c_void_p(ierr_local.ctypes.data), ctypes.byref(interp_in_present), ctypes.byref(interp_in_dim_1), ctypes.byref(interp_in_dim_2), ctypes.c_void_p(interp_in_local.ctypes.data), ctypes.byref(interp_out_present), ctypes.byref(interp_out_dim_1), ctypes.byref(interp_out_dim_2), ctypes.c_void_p(interp_out_local.ctypes.data), ctypes.byref(eps_present), ctypes.byref(eps_local), ctypes.byref(extrap_present), ctypes.byref(extrap_local), ctypes.byref(rnorm_present), ctypes.byref(rnorm_dim_1), ctypes.c_void_p(rnorm_local.ctypes.data), ctypes.byref(ibudget_present), ctypes.byref(ibudget_local), ctypes.byref(chain_present), ctypes.byref(chain_local), ctypes.byref(exact_present), ctypes.byref(exact_local), ctypes.byref(pmode_present), ctypes.byref(pmode_local))
+    clib.c_delaunaysparsep(ctypes.byref(d), ctypes.byref(n), ctypes.byref(pts_dim_1), ctypes.byref(pts_dim_2), ctypes.c_void_p(pts.ctypes.data), ctypes.byref(m), ctypes.byref(q_dim_1), ctypes.byref(q_dim_2), ctypes.c_void_p(q.ctypes.data), ctypes.byref(simps_dim_1), ctypes.byref(simps_dim_2), ctypes.c_void_p(simps.ctypes.data), ctypes.byref(weights_dim_1), ctypes.byref(weights_dim_2), ctypes.c_void_p(weights.ctypes.data), ctypes.byref(ierr_dim_1), ctypes.c_void_p(ierr.ctypes.data), ctypes.byref(interp_in_present), ctypes.byref(interp_in_dim_1), ctypes.byref(interp_in_dim_2), ctypes.c_void_p(interp_in.ctypes.data), ctypes.byref(interp_out_present), ctypes.byref(interp_out_dim_1), ctypes.byref(interp_out_dim_2), ctypes.c_void_p(interp_out.ctypes.data), ctypes.byref(eps_present), ctypes.byref(eps), ctypes.byref(extrap_present), ctypes.byref(extrap), ctypes.byref(rnorm_present), ctypes.byref(rnorm_dim_1), ctypes.c_void_p(rnorm.ctypes.data), ctypes.byref(ibudget_present), ctypes.byref(ibudget), ctypes.byref(chain_present), ctypes.byref(chain), ctypes.byref(exact_present), ctypes.byref(exact), ctypes.byref(pmode_present), ctypes.byref(pmode))
 
     # Return final results, 'INTENT(OUT)' arguments only.
-    return np.asarray(pts_local), np.asarray(q_local), np.asarray(simps_local), np.asarray(weights_local), np.asarray(ierr_local), (np.asarray(interp_out_local) if interp_out_present else None), (np.asarray(rnorm_local) if rnorm_present else None)
+    return pts, q, simps, weights, ierr, (interp_out if interp_out_present else None), (rnorm if rnorm_present else None)
+
+
+# ----------------------------------------------
+# Wrapper for the Fortran subroutine PROJECT
+
+def project(d, n, pts, z, eps=None, weights=None):
+    '''! Project a point outside the convex hull of the point set onto the convex
+! hull by solving a non negatively constrained least squares problem with 1
+! equality constraint (an instance of the WNNLS problem):
+!
+!    min_X   || MATMUL(PTS, X) - Z ||   s.t.   X >= 0, SUM(X) == 1
+!
+! The solution to the WNNLS problem stated above gives the projection Z_hat as
+! a convex combination of the data points:
+!
+!   Z_hat = MATMUL(PTS, X).
+!
+! The above WNNLS problem is solved via R. Fletcher's QP solver: BQPD.
+! Compared to other existing (D)WNNLS solvers, BQPD's flexible nature allows
+! us to exploit the sparsity in the solution X, which should contain at most
+! D positive entries (inactive constraints).
+!
+!
+! On input:
+!
+! D is the dimension of the space for PTS and Z.
+!
+! N is the number of data points in PTS.
+!
+! PTS(1:D, 1:N) is a real valued matrix with N columns, each containing the
+!    coordinates of a single data point in R^D.
+!
+! Z(1:D) is a real vector specifying the coordinates of a single
+!    extrapolation point in R^D.
+!
+!
+! On output:
+!
+! Z is overwritten with the result of the projection (labeled Z_hat above).
+!
+! RNORM contains the norm of the residual vector || Z - Z_hat ||.
+!
+! IERR contains an integer valued error flag (0=success) forwaded from BQPD.
+!    Possible exit codes are listed below:
+!
+!       0 = solution obtained
+!       1 = unbounded problem detected (f(x)<=fmin would occur)
+!       2 = bl(i) > bu(i) for some i
+!       3 = infeasible problem detected in Phase 1
+!       4 = incorrect setting of m, n, kmax, mlp, mode or tol
+!       5 = not enough space in lp
+!       6 = not enough space for reduced Hessian matrix (increase kmax)
+!       7 = not enough space for sparse factors (sparse code only)
+!       8 = maximum number of unsuccessful restarts taken
+!      -1 = a memory allocation error occurred (indicates the problem size is
+!           too large for the additional memory overhead from extrapolation)
+!
+!
+! Optional arguments:
+!
+! EPS contains the real working precision for the problem on input. By default,
+!    EPS is assigned \sqrt{\mu} where \mu denotes the unit roundoff for the
+!    machine. In general, any values that differ by less than EPS are judged
+!    as equal, and any weights that are greater than -EPS are judged as
+!    nonnegative.  EPS cannot take a value less than the default value of
+!    \sqrt{\mu}. If any value less than \sqrt{\mu} is supplied, the default
+!    value will be used instead automatically. Note that in order to ensure
+!    that DELAUNAYSPARSE will be within tolerances, BQPD does not use the
+!    value of EPS given here. Instead, BQPD is given a tolerance of
+!    EPS ** 1.5.
+!
+! WEIGHTS(N) is assigned the projection weights on output, when present.
+!
+!
+! Subroutines and functions directly referenced from BLAS are
+!      DNRM2, DGEMV.
+! BQPD, its utility functions, and its sparse linear algebra library are
+! also referenced.
+!
+!
+! This work is from a modification to the driver for BQPD by R. Fletcher,
+! with modifications made by Tyler H. Chang (THC) and Sven Leyffer (SL).
+!
+!
+! Version history:
+!
+! Version 1: Forked from BQPD by SL (Aug 2023)
+!            Converted to f90 by THC (Sep 2023)'''
+    
+    # Setting up "d"
+    if (type(d) is not ctypes.c_int): d = ctypes.c_int(d)
+    
+    # Setting up "n"
+    if (type(n) is not ctypes.c_int): n = ctypes.c_int(n)
+    
+    # Setting up "pts"
+    if ((not issubclass(type(pts), numpy.ndarray)) or
+        (not numpy.asarray(pts).flags.f_contiguous) or
+        (not (pts.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'pts' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        pts = numpy.asarray(pts, dtype=ctypes.c_double, order='F')
+    pts_dim_1 = ctypes.c_long(pts.shape[0])
+    pts_dim_2 = ctypes.c_long(pts.shape[1])
+    
+    # Setting up "z"
+    if ((not issubclass(type(z), numpy.ndarray)) or
+        (not numpy.asarray(z).flags.f_contiguous) or
+        (not (z.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'z' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        z = numpy.asarray(z, dtype=ctypes.c_double, order='F')
+    z_dim_1 = ctypes.c_long(z.shape[0])
+    
+    # Setting up "rnorm"
+    rnorm = ctypes.c_double()
+    
+    # Setting up "ierr"
+    ierr = ctypes.c_int()
+    
+    # Setting up "eps"
+    eps_present = ctypes.c_bool(True)
+    if (eps is None):
+        eps_present = ctypes.c_bool(False)
+        eps = ctypes.c_double()
+    else:
+        eps = ctypes.c_double(eps)
+    if (type(eps) is not ctypes.c_double): eps = ctypes.c_double(eps)
+    
+    # Setting up "weights"
+    weights_present = ctypes.c_bool(True)
+    if (weights is None):
+        weights_present = ctypes.c_bool(False)
+        weights = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+    elif (type(weights) == bool) and (weights):
+        weights = numpy.zeros(shape=(1), dtype=ctypes.c_double, order='F')
+    elif ((not issubclass(type(weights), numpy.ndarray)) or
+          (not numpy.asarray(weights).flags.f_contiguous) or
+          (not (weights.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'weights' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        weights = numpy.asarray(weights, dtype=ctypes.c_double, order='F')
+    if (weights_present):
+        weights_dim_1 = ctypes.c_long(weights.shape[0])
+    else:
+        weights_dim_1 = ctypes.c_long()
+
+    # Call C-accessible Fortran wrapper.
+    clib.c_project(ctypes.byref(d), ctypes.byref(n), ctypes.byref(pts_dim_1), ctypes.byref(pts_dim_2), ctypes.c_void_p(pts.ctypes.data), ctypes.byref(z_dim_1), ctypes.c_void_p(z.ctypes.data), ctypes.byref(rnorm), ctypes.byref(ierr), ctypes.byref(eps_present), ctypes.byref(eps), ctypes.byref(weights_present), ctypes.byref(weights_dim_1), ctypes.c_void_p(weights.ctypes.data))
+
+    # Return final results, 'INTENT(OUT)' arguments only.
+    return z, rnorm.value, ierr.value, (weights if weights_present else None)
+
+
+# ----------------------------------------------
+# Wrapper for the Fortran subroutine GDOTX
+
+def gdotx(n, x, ws, lws, v):
+    '''! Auxiliary subroutine needed by BQPD to compute the gradient v = <G, x>
+!    where G = <PTS, PTS>. Since PTS is a DxN matrix and N could be large,
+!    we will not explicitly form the NxN matrix G.
+!
+!
+! On input:
+!
+! N is the integer length of the gradient vector.
+!
+! X is an array of length N containing the current iterate.
+!
+! WS is a real valued workspace array, whose first D*N entries contain PTS,
+!    stored in (flattened) column-major order.
+!
+! LWS is an integer valued workspace array, with LWS(0) contains the value
+!    of D.
+!
+!
+! On output:
+!
+! V is a real valued vector of length D containing < <PTS, PTS>, x >.
+!
+!
+! Uses the external BLAS subroutine DGEMV.'''
+    
+    # Setting up "n"
+    if (type(n) is not ctypes.c_int): n = ctypes.c_int(n)
+    
+    # Setting up "x"
+    if ((not issubclass(type(x), numpy.ndarray)) or
+        (not numpy.asarray(x).flags.f_contiguous) or
+        (not (x.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'x' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        x = numpy.asarray(x, dtype=ctypes.c_double, order='F')
+    x_dim_1 = ctypes.c_long(x.shape[0])
+    
+    # Setting up "ws"
+    if ((not issubclass(type(ws), numpy.ndarray)) or
+        (not numpy.asarray(ws).flags.f_contiguous) or
+        (not (ws.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'ws' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        ws = numpy.asarray(ws, dtype=ctypes.c_double, order='F')
+    ws_dim_1 = ctypes.c_long(ws.shape[0])
+    
+    # Setting up "lws"
+    if ((not issubclass(type(lws), numpy.ndarray)) or
+        (not numpy.asarray(lws).flags.f_contiguous) or
+        (not (lws.dtype == numpy.dtype(ctypes.c_int)))):
+        import warnings
+        warnings.warn("The provided argument 'lws' was not an f_contiguous NumPy array of type 'ctypes.c_int' (or equivalent). Automatically converting (probably creating a full copy).")
+        lws = numpy.asarray(lws, dtype=ctypes.c_int, order='F')
+    lws_dim_1 = ctypes.c_long(lws.shape[0])
+    
+    # Setting up "v"
+    if ((not issubclass(type(v), numpy.ndarray)) or
+        (not numpy.asarray(v).flags.f_contiguous) or
+        (not (v.dtype == numpy.dtype(ctypes.c_double)))):
+        import warnings
+        warnings.warn("The provided argument 'v' was not an f_contiguous NumPy array of type 'ctypes.c_double' (or equivalent). Automatically converting (probably creating a full copy).")
+        v = numpy.asarray(v, dtype=ctypes.c_double, order='F')
+    v_dim_1 = ctypes.c_long(v.shape[0])
+
+    # Call C-accessible Fortran wrapper.
+    clib.c_gdotx(ctypes.byref(n), ctypes.byref(x_dim_1), ctypes.c_void_p(x.ctypes.data), ctypes.byref(ws_dim_1), ctypes.c_void_p(ws.ctypes.data), ctypes.byref(lws_dim_1), ctypes.c_void_p(lws.ctypes.data), ctypes.byref(v_dim_1), ctypes.c_void_p(v.ctypes.data))
+
+    # Return final results, 'INTENT(OUT)' arguments only.
+    return ws, v
+
+
+class real_precision:
+    ''''''
+
+    # Declare 'r8'
+    def get_r8(self):
+        r8 = ctypes.c_int()
+        clib.real_precision_get_r8(ctypes.byref(r8))
+        return r8.value
+    def set_r8(self, r8):
+        raise(NotImplementedError('Module attributes with PARAMETER status cannot be set.'))
+    r8 = property(get_r8, set_r8)
+
+real_precision = real_precision()
+
+
+class delsparse_mod:
+    '''! This module contains the REAL_PRECISION R8 data type for 64-bit arithmetic
+! and interface blocks for the DELAUNAYSPARSES and DELAUNAYSPARSEP
+! subroutines for computing the Delaunay simplices containing interpolation
+! points Q in R^D given data points PTS.'''
+
+delsparse_mod = delsparse_mod()
 

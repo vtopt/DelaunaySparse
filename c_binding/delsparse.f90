@@ -54,13 +54,29 @@ INTERFACE
       INTEGER, INTENT(IN), OPTIONAL :: PMODE
    END SUBROUTINE DELAUNAYSPARSEP
 
-   ! Interface for SLATEC subroutine DWNNLS.
-   SUBROUTINE DWNNLS( W, MDW, ME, MA, N, L, PRGOPT, X, RNORM,  &
-                               MODE, IWORK, WORK )
-      USE REAL_PRECISION, ONLY : R8
-      INTEGER :: IWORK(*), L, MA, MDW, ME, MODE, N
-      REAL(KIND=R8) :: PRGOPT(*), RNORM, W(MDW,*), WORK(*), X(*)
-   END SUBROUTINE DWNNLS
+   !! The following interface block is no longer needed starting in
+   !! version 2.
+   !
+   !! Interface for SLATEC subroutine DWNNLS.
+   !SUBROUTINE DWNNLS( W, MDW, ME, MA, N, L, PRGOPT, X, RNORM,  &
+   !                            MODE, IWORK, WORK )
+   !   USE REAL_PRECISION, ONLY : R8
+   !   INTEGER :: IWORK(*), L, MA, MDW, ME, MODE, N
+   !   REAL(KIND=R8) :: PRGOPT(*), RNORM, W(MDW,*), WORK(*), X(*)
+   !END SUBROUTINE DWNNLS
+
+   ! Interface for the new PROJECT subroutine, added in version 2
+   ! to replace DWNNLS.
+   SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+   USE REAL_PRECISION, ONLY : R8
+   INTEGER, INTENT(IN) :: D, N
+   REAL(KIND=R8), INTENT(IN) :: PTS(:,:)
+   REAL(KIND=R8), INTENT(INOUT) :: Z(:)
+   REAL(KIND=R8), INTENT(OUT) :: RNORM
+   INTEGER, INTENT(OUT) :: IERR
+   REAL(KIND=R8), OPTIONAL, INTENT(IN) :: EPS
+   REAL(KIND=R8), OPTIONAL, INTENT(OUT) :: WEIGHTS(:)
+   END SUBROUTINE PROJECT
 
 END INTERFACE
 
@@ -169,12 +185,13 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
-!      The errors 72, 80--83 should never occur, and likely indicate a
+!      The errors 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
 ! 80 : The LAPACK subroutine DGEQP3 has reported an illegal value.
 ! 81 : The LAPACK subroutine DGETRF has reported an illegal value.
@@ -243,35 +260,39 @@ SUBROUTINE DELAUNAYSPARSES( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR, &
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 !
 ! Subroutines and functions directly referenced from BLAS are
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSES, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.  
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 ! 
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
 ! 
 USE REAL_PRECISION, ONLY : R8
 IMPLICIT NONE
@@ -320,17 +341,22 @@ REAL(KIND=R8) :: B(D) ! The RHS of a linear system.
 REAL(KIND=R8) :: CENTER(D) ! The circumcenter of a simplex. 
 REAL(KIND=R8) :: LQ(D,D) ! Holds LU or QR factorization of AT.
 REAL(KIND=R8) :: PLANE(D+1) ! The hyperplane containing a facet.
-REAL(KIND=R8) :: PRGOPT_DWNNLS(1) ! Options array for DWNNLS.
 REAL(KIND=R8) :: PROJ(D) ! The projection of the current iterate.
 REAL(KIND=R8) :: TAU(D) ! Householder reflector constants.
 REAL(KIND=R8) :: X(D) ! The solution to a linear system.
 
-! Extrapolation work arrays are only allocated if DWNNLS is called.
-INTEGER, ALLOCATABLE :: IWORK_DWNNLS(:) ! Only for DWNNLS.
-REAL(KIND=R8), ALLOCATABLE :: W_DWNNLS(:,:) ! Only for DWNNLS.
+! Allocatable LAPACK work array, whose size is determined dynamically.
 REAL(KIND=R8), ALLOCATABLE :: WORK(:) ! Allocated with size LWORK.
-REAL(KIND=R8), ALLOCATABLE :: WORK_DWNNLS(:) ! Only for DWNNLS.
-REAL(KIND=R8), ALLOCATABLE :: X_DWNNLS(:) ! Only for DWNNLS.
+
+!! Starting in version 2, the following work array are unused as DWNNLS
+!! has been replaced by BQPD.
+!
+!! Extrapolation work arrays are only allocated if DWNNLS is called.
+!INTEGER, ALLOCATABLE :: IWORK_DWNNLS(:) ! Only for DWNNLS.
+!REAL(KIND=R8) :: PRGOPT_DWNNLS(1) ! Options array for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: W_DWNNLS(:,:) ! Only for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: WORK_DWNNLS(:) ! Only for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: X_DWNNLS(:) ! Only for DWNNLS.
 
 ! External functions and subroutines.
 REAL(KIND=R8), EXTERNAL :: DDOT  ! Inner product (BLAS).
@@ -341,8 +367,22 @@ EXTERNAL :: DGETRF ! Perform a LU factorization with partial pivoting (LAPACK).
 EXTERNAL :: DGETRS ! Use the output of DGETRF to solve a linear system (LAPACK).
 EXTERNAL :: DORMQR ! Apply householder reflectors to a matrix (LAPACK).
 EXTERNAL :: DTRSM  ! Perform a triangular solve (BLAS).
-EXTERNAL :: DWNNLS ! Solve an inequality constrained least squares problem
-                   ! (SLATEC).
+!EXTERNAL :: DWNNLS ! Solve an inequality constrained least squares problem
+!                   ! (SLATEC).
+
+! Interface block for the new PROJECT subroutine, added in version 2.
+INTERFACE
+   SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+   USE REAL_PRECISION, ONLY : R8
+   INTEGER, INTENT(IN) :: D, N
+   REAL(KIND=R8), INTENT(IN) :: PTS(:,:)
+   REAL(KIND=R8), INTENT(INOUT) :: Z(:)
+   REAL(KIND=R8), INTENT(OUT) :: RNORM
+   INTEGER, INTENT(OUT) :: IERR
+   REAL(KIND=R8), OPTIONAL, INTENT(IN) :: EPS
+   REAL(KIND=R8), OPTIONAL, INTENT(OUT) :: WEIGHTS(:)
+   END SUBROUTINE PROJECT
+END INTERFACE
 
 ! Check for input size and dimension errors.
 IF (D < 1) THEN ! The dimension must satisfy D > 0.
@@ -419,11 +459,6 @@ ELSE
    EXACTL = .TRUE.
 END IF
 
-! Scale and center the data points and interpolation points.
-CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
-IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
-   IERR(:) = 30; RETURN; END IF
-
 ! Query DGEQP3 for optimal work array size (LWORK).
 LWORK = -1
 CALL DGEQP3(D,D,LQ,D,IPIV,TAU,B,LWORK,IERR(1))
@@ -431,6 +466,11 @@ LWORK = INT(B(1)) ! Compute the optimal work array size.
 ALLOCATE(WORK(LWORK), STAT=I) ! Allocate WORK to size LWORK.
 IF (I .NE. 0) THEN ! Check for memory allocation errors.
    IERR(:) = 50; RETURN; END IF
+
+! Scale and center the data points and interpolation points.
+CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
+IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
+   IERR(:) = 30; RETURN; END IF
 
 ! Initialize all error codes to "TBD" values.
 IERR(:) = 40
@@ -534,26 +574,41 @@ OUTER : DO MI = 1, M
                   ! There is no other direction to flip, so Q(:,MI) must be
                   ! within EPSL of the current simplex.
                   ! Project Q(:,MI) onto the current simplex.
-                  
-                  ! Since at least one projection has already been done,
-                  ! the work arrays have already been allocated.
-                  PRGOPT_DWNNLS(1) = 1.0_R8
-                  IWORK_DWNNLS(1) = 6*D + 6
-                  IWORK_DWNNLS(2) = 2*D + 2
-                  ! Set equality constraint.
-                  W_DWNNLS(1,1:D+2) = 1.0_R8
-                  ! Populate LS coefficient matrix and RHS.
-                  FORALL (I=1:D+1) W_DWNNLS(2:D+1,I) = PTS(:,SIMPS(I,MI))
-                  W_DWNNLS(2:D+1,D+2) = PROJ(:)
-                  ! Project onto the current simplex.
-                  CALL DWNNLS(W_DWNNLS, D+1, 1, D, D+1, 0, PRGOPT_DWNNLS, &
-                     WEIGHTS(:,MI), WORK(1), IERR(MI), IWORK_DWNNLS,      &
-                     WORK_DWNNLS)
-                  IF (IERR(MI) .EQ. 1) THEN ! Failure to converge.
-                     IERR(MI) = 71; CYCLE OUTER
-                  ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
-                     IERR(MI) = 72; CYCLE OUTER
+
+                  !! The following code is obsolete starting in version 2,
+                  !! as we have moved away from using DWNNLS for projections.
+                  !
+                  !! Since at least one projection has already been done,
+                  !! the work arrays have already been allocated.
+                  !PRGOPT_DWNNLS(1) = 1.0_R8
+                  !IWORK_DWNNLS(1) = 6*D + 6
+                  !IWORK_DWNNLS(2) = 2*D + 2
+                  !! Set equality constraint.
+                  !W_DWNNLS(1,1:D+2) = 1.0_R8
+                  !! Populate LS coefficient matrix and RHS.
+                  !FORALL (I=1:D+1) W_DWNNLS(2:D+1,I) = PTS(:,SIMPS(I,MI))
+                  !W_DWNNLS(2:D+1,D+2) = PROJ(:)
+                  !! Project onto the current simplex.
+                  !CALL DWNNLS(W_DWNNLS, D+1, 1, D, D+1, 0, PRGOPT_DWNNLS, &
+                  !   WEIGHTS(:,MI), WORK(1), IERR(MI), IWORK_DWNNLS,      &
+                  !   WORK_DWNNLS)
+                  !IF (IERR(MI) .EQ. 1) THEN ! Failure to converge.
+                  !   IERR(MI) = 71; CYCLE OUTER
+                  !ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
+                  !   IERR(MI) = 72; CYCLE OUTER
+                  !END IF
+
+                  ! New code (version 2) for computing projections via BQPD.
+                  CALL PROJECT(D, D+1, PTS(:,SIMPS(:,MI)), PROJ, MINRAD,  &
+                               IERR(MI), EPS=EPSL, WEIGHTS=WEIGHTS(:,MI))
+                  IF (IERR(MI) .NE. 0) THEN
+                     IF (IERR(MI) < 0) THEN
+                        IERR(MI) = 70; CYCLE OUTER
+                     ELSE
+                        IERR(MI) = IERR(MI) + 70; CYCLE OUTER
+                     END IF
                   END IF
+
                   ! A solution has been found; return it.
                   EXIT INNER
                END IF
@@ -584,8 +639,21 @@ OUTER : DO MI = 1, M
          END IF
 
          ! Otherwise, project the extrapolation point onto the convex hull.
-         CALL PROJECT()
-         IF (IERR(MI) .NE. 0) CYCLE OUTER
+         CALL PROJECT(D, N, PTS, PROJ, RNORML, IERR(MI), EPS=EPSL)
+         IF (IERR(MI) .NE. 0) THEN
+            ! Set the error flag and skip this point.
+            IF (IERR(MI) < 0) THEN
+               IERR(MI) = 70; CYCLE OUTER
+            ELSE
+               IERR(MI) = IERR(MI) + 70; CYCLE OUTER
+            END IF
+            CYCLE OUTER
+         END IF
+
+         !! Old code for computing projections, changed in version 2.
+         !
+         !CALL PROJECT()
+         !IF (IERR(MI) .NE. 0) CYCLE OUTER
 
          ! Check the value of RNORML for over-extrapolation.
          IF (RNORML > EXTRAPL * PTS_DIAM) THEN
@@ -639,10 +707,10 @@ END IF
 
 ! Free dynamic work arrays.
 DEALLOCATE(WORK)
-IF (ALLOCATED(IWORK_DWNNLS)) DEALLOCATE(IWORK_DWNNLS)
-IF (ALLOCATED(WORK_DWNNLS))  DEALLOCATE(WORK_DWNNLS)
-IF (ALLOCATED(W_DWNNLS))     DEALLOCATE(W_DWNNLS)
-IF (ALLOCATED(X_DWNNLS))     DEALLOCATE(X_DWNNLS)
+!IF (ALLOCATED(IWORK_DWNNLS)) DEALLOCATE(IWORK_DWNNLS)
+!IF (ALLOCATED(WORK_DWNNLS))  DEALLOCATE(WORK_DWNNLS)
+!IF (ALLOCATED(W_DWNNLS))     DEALLOCATE(W_DWNNLS)
+!IF (ALLOCATED(X_DWNNLS))     DEALLOCATE(X_DWNNLS)
 
 RETURN
 
@@ -676,7 +744,8 @@ SIMPS(:,MI) = 0
 MINRAD = HUGE(0.0_R8)
 DO I = 1, N
    ! Check the distance to Q(:,MI).
-   CURRRAD = DNRM2(D, PTS(:,I) - PROJ(:), 1)
+   WORK(1:D) = PTS(:,I) - PROJ(:)
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD) THEN; MINRAD = CURRRAD; SIMPS(1,MI) = I; END IF
 END DO
 ! Find the second point, i.e., the closest point to PTS(:,SIMPS(1,MI)).
@@ -685,7 +754,8 @@ DO I = 1, N
    ! Skip repeated vertices.
    IF (I .EQ. SIMPS(1,MI)) CYCLE
    ! Check the diameter of the resulting circumsphere.
-   CURRRAD = DNRM2(D, PTS(:,I)-PTS(:,SIMPS(1,MI)), 1)
+   WORK(1:D) = PTS(:,I) - PTS(:,SIMPS(1,MI))
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD) THEN; MINRAD = CURRRAD; SIMPS(2,MI) = I; END IF
 END DO
 IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
@@ -722,7 +792,8 @@ DO I = 2, D
       ! Check that this point is not already in the simplex.
       IF (ANY(SIMPS(:,MI) .EQ. J)) CYCLE
       ! If PTS(:,J) is more than twice MINRAD from CENTER, do a quick skip.
-      IF (DNRM2(D, CENTER - PTS(:,J), 1) > 2.0_R8 * MINRAD) CYCLE
+      WORK(1:D) = CENTER - PTS(:,J)
+      IF (DNRM2(D, WORK(1:D), 1) > 2.0_R8 * MINRAD) CYCLE
       ! Perform a rank-1 update to the current QR factorization of A^T by
       ! rotating PTS(:,I) - PTS(:,SIMPS(1,MI)) by Q^T and storing in the
       ! final column of R.
@@ -832,7 +903,8 @@ CALL DTRSM('L', 'U', 'T', 'N', D-1, 1, 1.0_R8, LQ, D, X, D)
 ! Loop through all points P* in PTS.
 DO I = 1, N
    ! Check that P* is inside the current ball.
-   IF (DNRM2(D, PTS(:,I) - CENTER(:), 1) > MINRAD) CYCLE ! If not, skip.
+   WORK(1:D) = CENTER - PTS(:,I)
+   IF (DNRM2(D, WORK(1:D), 1) > MINRAD) CYCLE ! If not, skip.
    ! Check that P* is on the appropriate halfspace.
    SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
    IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE ! If not, skip.
@@ -971,55 +1043,59 @@ END DO
 RETURN
 END FUNCTION PTINSIMP
 
-SUBROUTINE PROJECT()
-! Project a point outside the convex hull of the point set onto the convex hull
-! by solving an inequality constrained least squares problem. The solution to
-! the least squares problem gives the projection as a convex combination of the
-! data points. The projection can then be computed by performing a matrix
-! vector multiplication.
-
-! Allocate work arrays.
-IF (.NOT. ALLOCATED(IWORK_DWNNLS)) THEN
-   ALLOCATE(IWORK_DWNNLS(D+1+N), STAT=IERR(MI))
-   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
-END IF
-IF (.NOT. ALLOCATED(WORK_DWNNLS)) THEN
-   ALLOCATE(WORK_DWNNLS(D+1+N*5), STAT=IERR(MI))
-   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
-END IF
-IF (.NOT. ALLOCATED(W_DWNNLS)) THEN
-   ALLOCATE(W_DWNNLS(D+1,N+1), STAT=IERR(MI))
-   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
-END IF
-IF (.NOT. ALLOCATED(X_DWNNLS)) THEN
-   ALLOCATE(X_DWNNLS(N), STAT=IERR(MI))
-   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
-END IF
-
-! Initialize work array and settings values.
-PRGOPT_DWNNLS(1) = 1.0_R8
-IWORK_DWNNLS(1) = D+1+5*N
-IWORK_DWNNLS(2) = D+1+N
-W_DWNNLS(1, :) = 1.0_R8          ! Set convexity (equality) constraint.
-W_DWNNLS(2:D+1,1:N) = PTS(:,:)   ! Copy data points.
-W_DWNNLS(2:D+1,N+1) = PROJ(:)    ! Copy extrapolation point.
-! Compute the solution to the inequality constrained least squares problem to
-! get the projection coefficients.
-CALL DWNNLS(W_DWNNLS, D+1, 1, D, N, 0, PRGOPT_DWNNLS, X_DWNNLS, RNORML, &
-   IERR(MI), IWORK_DWNNLS, WORK_DWNNLS)
-IF (IERR(MI) .EQ. 1) THEN ! Failure to converge.
-   IERR(MI) = 71; RETURN
-ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
-   IERR(MI) = 72; RETURN
-END IF
-! Zero all weights that are approximately zero and renormalize the sum.
-WHERE (X_DWNNLS < EPSL) X_DWNNLS = 0.0_R8
-X_DWNNLS(:) = X_DWNNLS(:) / SUM(X_DWNNLS)
-! Compute the actual projection via matrix vector multiplication.
-CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
-RNORML = DNRM2(D, PROJ(:) - Q(:,MI), 1)
-RETURN
-END SUBROUTINE PROJECT
+!! The following definition of the PROJECT subroutine is no longer used
+!! starting in version 2, and has been replaced by an external PROJECT
+!! subroutine based on the BQPD solver.
+!
+!SUBROUTINE PROJECT()
+!! Project a point outside the convex hull of the point set onto the convex
+!! hull by solving an inequality constrained least squares problem. The
+!! solution to the least squares problem gives the projection as a convex
+!! combination of the data points. The projection can then be computed by
+!! performing a matrix vector multiplication.
+!
+!! Allocate work arrays.
+!IF (.NOT. ALLOCATED(IWORK_DWNNLS)) THEN
+!   ALLOCATE(IWORK_DWNNLS(D+1+N), STAT=IERR(MI))
+!   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
+!END IF
+!IF (.NOT. ALLOCATED(WORK_DWNNLS)) THEN
+!   ALLOCATE(WORK_DWNNLS(D+1+N*5), STAT=IERR(MI))
+!   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
+!END IF
+!IF (.NOT. ALLOCATED(W_DWNNLS)) THEN
+!   ALLOCATE(W_DWNNLS(D+1,N+1), STAT=IERR(MI))
+!   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
+!END IF
+!IF (.NOT. ALLOCATED(X_DWNNLS)) THEN
+!   ALLOCATE(X_DWNNLS(N), STAT=IERR(MI))
+!   IF(IERR(MI) .NE. 0) THEN; IERR(MI) = 70; RETURN; END IF
+!END IF
+!
+!! Initialize work array and settings values.
+!PRGOPT_DWNNLS(1) = 1.0_R8
+!IWORK_DWNNLS(1) = D+1+5*N
+!IWORK_DWNNLS(2) = D+1+N
+!W_DWNNLS(1, :) = 1.0_R8          ! Set convexity (equality) constraint.
+!W_DWNNLS(2:D+1,1:N) = PTS(:,:)   ! Copy data points.
+!W_DWNNLS(2:D+1,N+1) = PROJ(:)    ! Copy extrapolation point.
+!! Compute the solution to the inequality constrained least squares problem to
+!! get the projection coefficients.
+!CALL DWNNLS(W_DWNNLS, D+1, 1, D, N, 0, PRGOPT_DWNNLS, X_DWNNLS, RNORML, &
+!   IERR(MI), IWORK_DWNNLS, WORK_DWNNLS)
+!IF (IERR(MI) .EQ. 1) THEN ! Failure to converge.
+!   IERR(MI) = 71; RETURN
+!ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
+!   IERR(MI) = 72; RETURN
+!END IF
+!! Zero all weights that are approximately zero and renormalize the sum.
+!WHERE (X_DWNNLS < EPSL) X_DWNNLS = 0.0_R8
+!X_DWNNLS(:) = X_DWNNLS(:) / SUM(X_DWNNLS)
+!! Compute the actual projection via matrix vector multiplication.
+!CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
+!RNORML = DNRM2(D, PROJ(:) - Q(:,MI), 1)
+!RETURN
+!END SUBROUTINE PROJECT
 
 SUBROUTINE RESCALE(MINDIST, DIAMETER, SCALE)
 ! Rescale and transform data to be centered at the origin with unit
@@ -1072,7 +1148,8 @@ IF (EXACTL) THEN
    ! and MINDIST values.
    DO I = 1, N ! Cycle through all pairs of points.
       DO J = I + 1, N
-         DISTANCE = DNRM2(D, PTS(:,I) - PTS(:,J), 1) ! Compute the distance.
+         WORK(1:D) = PTS(:,I) - PTS(:,J)
+         DISTANCE = DNRM2(D, WORK(1:D), 1) ! Compute the distance.
          IF (DISTANCE > DIAMETER) THEN ! Compare to the current diameter.
             DIAMETER = DISTANCE
          END IF
@@ -1197,10 +1274,11 @@ SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,  &
 ! 61 : A value that was judged appropriate later caused LAPACK to encounter a
 !      singularity. Try increasing the value of EPS.
 !
-! 70 : Allocation error for the extrapolation work arrays.
-! 71 : The SLATEC subroutine DWNNLS failed to converge during the projection
-!      of an extrapolation point onto the convex hull.
-! 72 : The SLATEC subroutine DWNNLS has reported a usage error.
+! 70 : Allocation error for the extrapolation work arrays. Note that
+!      extrapolation has a higher memory overhead than interpolation for
+!      the current version.
+! 7x : BQPD has reported an error while computing the projection. See the
+!      comment block for the PROJECT subroutine for more details.
 !
 !      The errors 72, 80--83 should never occur, and likely indicate a
 !      compiler bug or hardware failure.
@@ -1273,18 +1351,21 @@ SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,  &
 !
 ! EXACT is a logical input argument that determines whether the exact
 !    diameter should be computed and whether a check for duplicate data
-!    points should be performed in advance. When EXACT=.FALSE., the
-!    diameter of PTS is approximated by twice the distance from the
-!    barycenter of PTS to the farthest point in PTS, and no check is
-!    done to find the closest pair of points, which could result in hard
-!    to find bugs later on. When EXACT=.TRUE., the exact diameter is
-!    computed and an error is returned whenever PTS contains duplicate
-!    values up to the precision EPS. By default EXACT=.TRUE., but setting
-!    EXACT=.FALSE. could result in significant speedup when N is large.
-!    It is strongly recommended that most users leave EXACT=.TRUE., as
+!    points should be performed in advance. These checks are O(N^2 D) time
+!    complexity, while DELAUNAYSPARSE tends toward O(N D^4) on average.
+!    By default, EXACT=.TRUE. and the exact diameter is computed and an error
+!    is returned whenever PTS contains duplicate values up to the precision
+!    EPS. When EXACT=.FALSE., the diameter of PTS is approximated by twice
+!    the distance from the barycenter of PTS to the farthest point in PTS,
+!    and no check is done to find the closest pair of points.
+!    When EXACT=.TRUE., DELAUNAYSPARSE could spend over 90% of runtime
+!    calculating these constants, which are not critical to the DELAUNAYSPARSE
+!    algorithm. In particular, this happens for large values of N. However,
 !    setting EXACT=.FALSE. could result in input errors that are difficult
-!    to identify. Also, the diameter approximation could be wrong by up to
-!    a factor of two.
+!    to identify. It is recommended that users verify the input set PTS
+!    and possibly rescale PTS manually while EXACT=.TRUE. Then, when
+!    100% sure that PTS is valid, users may choose to set EXACT=.FALSE.
+!    in production runs for large values of N to achieve massive speedups.
 !
 ! PMODE is an integer specifying the level of parallelism to be exploited.
 !    If PMODE = 1, then parallelism is exploited at the level of the loop
@@ -1303,17 +1384,18 @@ SUBROUTINE DELAUNAYSPARSEP( D, N, PTS, M, Q, SIMPS, WEIGHTS, IERR,  &
 !      DDOT, DGEMV, DNRM2, DTRSM,
 ! and from LAPACK are
 !      DGEQP3, DGETRF, DGETRS, DORMQR.
-! The SLATEC subroutine DWNNLS is directly referenced. DWNNLS and all its
-! SLATEC dependencies have been slightly edited to comply with the Fortran
-! 2008 standard, with all print statements and references to stderr being
-! commented out. For a reference to DWNNLS, see ACM TOMS Algorithm 587
-! (Hanson and Haskell).  The module REAL_PRECISION from HOMPACK90 (ACM TOMS
-! Algorithm 777) is used for the real data type. The REAL_PRECISION module,
-! DELAUNAYSPARSEP, and DWNNLS and its dependencies comply with the Fortran
-! 2008 standard.  
+! The BQPD solver is also used. For more information, see
+!      Annals of Operations Research, 46 : 307--334 (1993).
+! The module REAL_PRECISION from HOMPACK90 (ACM TOMS Algorithm 777) is used
+! for the real data type. The REAL_PRECISION module, DELAUNAYSPARSES, and
+! BQPD and its dependencies comply with the Fortran 2008 standard.
 ! 
-! Primary Author: Tyler H. Chang
-! Last Update: March, 2020
+! Primary Author: Tyler H. Chang (THC)
+!
+! Version history:
+!
+! Version 2: Sep 2023 (THC et al.) -- replaced DWNNLS with BQPD (ACM TOMS Rmk)
+! Version 1: Mar 2020 (THC et al.) -- original version (ACM TOMS Alg 1012)
 ! 
 USE REAL_PRECISION, ONLY : R8
 IMPLICIT NONE
@@ -1367,17 +1449,23 @@ REAL(KIND=R8) :: CENTER(D) ! The circumcenter of a simplex.
 REAL(KIND=R8) :: CENTER_PRIV(D) ! Private copy of CENTER.
 REAL(KIND=R8) :: LQ(D,D) ! Holds LU or QR factorization of AT.
 REAL(KIND=R8) :: PLANE(D+1) ! The hyperplane containing a facet.
-REAL(KIND=R8) :: PRGOPT_DWNNLS(1) ! Options array for DWNNLS.
 REAL(KIND=R8) :: PROJ(D) ! The projection of the current iterate.
 REAL(KIND=R8) :: TAU(D) ! Householder reflector constants.
 REAL(KIND=R8) :: X(D) ! The solution to a linear system.
 
-! Extrapolation work arrays are only allocated if DWNNLS is called.
-INTEGER, ALLOCATABLE :: IWORK_DWNNLS(:) ! Only for DWNNLS.
-REAL(KIND=R8), ALLOCATABLE :: W_DWNNLS(:,:) ! Only for DWNNLS.
+! Allocatable LAPACK work array, whose size is determined dynamically.
 REAL(KIND=R8), ALLOCATABLE :: WORK(:) ! Allocated with size LWORK.
-REAL(KIND=R8), ALLOCATABLE :: WORK_DWNNLS(:) ! Only for DWNNLS.
-REAL(KIND=R8), ALLOCATABLE :: X_DWNNLS(:) ! Only for DWNNLS.
+
+!! Starting in version 2, the following work array are unused as DWNNLS
+!! has been replaced by BQPD.
+!
+!! Extrapolation work arrays are only allocated if DWNNLS is called.
+!INTEGER, ALLOCATABLE :: IWORK_DWNNLS(:) ! Only for DWNNLS.
+!REAL(KIND=R8) :: PRGOPT_DWNNLS(1) ! Options array for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: W_DWNNLS(:,:) ! Only for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: WORK(:) ! Allocated with size LWORK.
+!REAL(KIND=R8), ALLOCATABLE :: WORK_DWNNLS(:) ! Only for DWNNLS.
+!REAL(KIND=R8), ALLOCATABLE :: X_DWNNLS(:) ! Only for DWNNLS.
 
 ! External functions and subroutines.
 REAL(KIND=R8), EXTERNAL :: DDOT  ! Inner product (BLAS).
@@ -1388,8 +1476,22 @@ EXTERNAL :: DGETRF ! Perform a LU factorization with partial pivoting (LAPACK).
 EXTERNAL :: DGETRS ! Use the output of DGETRF to solve a linear system (LAPACK).
 EXTERNAL :: DORMQR ! Apply householder reflectors to a matrix (LAPACK).
 EXTERNAL :: DTRSM  ! Perform a triangular solve (BLAS).
-EXTERNAL :: DWNNLS ! Solve an inequality constrained least squares problem
-                   ! (SLATEC).
+!EXTERNAL :: DWNNLS ! Solve an inequality constrained least squares problem
+!                   ! (SLATEC).
+
+! Interface block for the new PROJECT subroutine, added in version 2.
+INTERFACE
+   SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+   USE REAL_PRECISION, ONLY : R8
+   INTEGER, INTENT(IN) :: D, N
+   REAL(KIND=R8), INTENT(IN) :: PTS(:,:)
+   REAL(KIND=R8), INTENT(INOUT) :: Z(:)
+   REAL(KIND=R8), INTENT(OUT) :: RNORM
+   INTEGER, INTENT(OUT) :: IERR
+   REAL(KIND=R8), OPTIONAL, INTENT(IN) :: EPS
+   REAL(KIND=R8), OPTIONAL, INTENT(OUT) :: WEIGHTS(:)
+   END SUBROUTINE PROJECT
+END INTERFACE
 
 ! Check for input size and dimension errors.
 IF (D < 1) THEN ! The dimension must satisfy D > 0.
@@ -1486,11 +1588,6 @@ ELSE ! The default setting for PMODE is level 1 parallelism if M > 1.
    END IF
 END IF
 
-! Scale and center the data points and interpolation points.
-CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
-IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
-   IERR(:) = 30; RETURN; END IF
-
 ! Query DGEQP3 for optimal work array size (LWORK).
 LWORK = -1
 CALL DGEQP3(D,D,LQ,D,IPIV,TAU,B,LWORK,IERR(1))
@@ -1499,8 +1596,13 @@ ALLOCATE(WORK(LWORK), STAT=I) ! Allocate WORK to size LWORK.
 IF (I .NE. 0) THEN ! Check for memory allocation errors.
    IERR(:) = 50; RETURN; END IF
 
-! Initialize PRGOPT_DWNNLS in case of extrapolation.
-PRGOPT_DWNNLS(1) = 1.0_R8
+! Scale and center the data points and interpolation points.
+CALL RESCALE(MINRAD, PTS_DIAM, PTS_SCALE)
+IF (MINRAD < EPSL) THEN ! Check for degeneracies in points spacing.
+   IERR(:) = 30; RETURN; END IF
+
+!! Initialize PRGOPT_DWNNLS in case of extrapolation.
+!PRGOPT_DWNNLS(1) = 1.0_R8
 
 ! Initialize all error codes to "TBD" values.
 IERR(:) = 40
@@ -1517,8 +1619,10 @@ IERR(:) = 40
 !$OMP& PRIVATE(I, J, K, IEXTRAPS, ITMP, JTMP, CURRRAD, MI, MINRAD,        &
 !$OMP&         RNORML, SIDE1, SIDE2, IERR_PRIV, VERTEX_PRIV, MINRAD_PRIV, &
 !$OMP&         PTINSIMP, IPIV, AT, B, CENTER, CENTER_PRIV, LQ, PLANE,     &
-!$OMP&         PROJ, TAU, WORK, X, IWORK_DWNNLS, W_DWNNLS, WORK_DWNNLS,   &
-!$OMP&         X_DWNNLS),                                                 &
+!$OMP&         PROJ, TAU, WORK, X),                                       &
+! The following variables are no longer used starting in version 2.
+!                                   IWORK_DWNNLS, W_DWNNLS, WORK_DWNNLS,   &
+!!$OMP&         X_DWNNLS),                                                 &
 !
 ! Any variables not explicitly listed above receive the SHARED scope
 ! by default and are visible across all threads.
@@ -1609,7 +1713,8 @@ MINRAD = HUGE(0.0_R8)
 !$OMP DO SCHEDULE(STATIC)
 DO I = 1, N
    ! Check the distance to Q(:,MI)
-   CURRRAD = DNRM2(D, PTS(:,I) - PROJ(:), 1)
+   WORK(1:D) = PTS(:,I) - PROJ(:)
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD_PRIV) THEN
       MINRAD_PRIV = CURRRAD; VERTEX_PRIV = I;
    END IF
@@ -1631,7 +1736,8 @@ DO I = 1, N
    ! Skip repeated vertices.
    IF (I .EQ. SIMPS(1,MI)) CYCLE
    ! Check the diameter of the resulting circumsphere.
-   CURRRAD = DNRM2(D, PTS(:,I)-PTS(:,SIMPS(1,MI)), 1)
+   WORK(1:D) = PTS(:,I) - PTS(:,SIMPS(1,MI))
+   CURRRAD = DNRM2(D, WORK(1:D), 1)
    IF (CURRRAD < MINRAD_PRIV) THEN
       MINRAD_PRIV = CURRRAD; VERTEX_PRIV = I
    END IF
@@ -1713,7 +1819,8 @@ DO I = 2, D
       ! Check that this point is not already in the simplex.
       IF (ANY(SIMPS(:,MI) .EQ. J)) CYCLE
       ! If PTS(:,J) is more than twice MINRAD_PRIV from CENTER, do a quick skip.
-      IF (DNRM2(D, CENTER - PTS(:,J), 1) > 2.0_R8 * MINRAD_PRIV) CYCLE
+      WORK(1:D) = CENTER - PTS(:,J)
+      IF (DNRM2(D, WORK(1:D), 1) > 2.0_R8 * MINRAD_PRIV) CYCLE
       ! Perform a rank-1 update to the current QR factorization of A^T by
       ! rotating PTS(:,I) - PTS(:,SIMPS(1,MI) by Q^T and storing in the
       ! final column of R.
@@ -2064,7 +2171,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    DO I = 1, N
       IF(IERR_PRIV .NE. 0) CYCLE ! If an error occurs, skip to the end.
       ! Check that P* is inside the current ball.
-      IF (DNRM2(D, PTS(:,I) - CENTER_PRIV(:), 1) > MINRAD_PRIV) CYCLE
+      WORK(1:D) = PTS(:,I) - CENTER_PRIV(:)
+      IF (DNRM2(D, WORK(1:D), 1) > MINRAD_PRIV) CYCLE
       ! Check that P* is on the appropriate halfspace.
       SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
       IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE
@@ -2097,7 +2205,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    !$OMP CRITICAL(REDUC_4)
    ! Check if PTS(:,VERTEX_PRIV) is inside the circumball.
    IF (VERTEX_PRIV .NE. 0) THEN
-      IF (DNRM2(D, PTS(:,VERTEX_PRIV) - CENTER(:), 1) < MINRAD) THEN
+      WORK(1:D) = PTS(:,VERTEX_PRIV) - CENTER(:)
+      IF (DNRM2(D, WORK(1:D), 1) < MINRAD) THEN
          MINRAD = MINRAD_PRIV
          CENTER(:) = CENTER_PRIV(:)
          SIMPS(D+1,MI) = VERTEX_PRIV
@@ -2219,32 +2328,56 @@ END IF
                   ! There is no other direction to flip, so Q(:,MI) must be
                   ! within EPSL of the current simplex.
                   ! Project Q(:,MI) onto the current simplex.
-                  
-                  ! Since at least one projection has already been done,
-                  ! the work arrays have already been allocated.
-                  PRGOPT_DWNNLS(1) = 1.0_R8
-                  IWORK_DWNNLS(1) = 6*D + 6
-                  IWORK_DWNNLS(2) = 2*D + 2
-                  ! Set equality constraint.
-                  W_DWNNLS(1,1:D+2) = 1.0_R8
-                  ! Populate LS coefficient matrix and RHS.
-                  FORALL (I=1:D+1) W_DWNNLS(2:D+1,I) = PTS(:,SIMPS(I,MI))
-                  W_DWNNLS(2:D+1,D+2) = PROJ(:)
-                  ! Project onto the current simplex.
-                  CALL DWNNLS(W_DWNNLS, D+1, 1, D, D+1, 0, PRGOPT_DWNNLS, &
-                     WEIGHTS(:,MI), WORK(1), IERR_PRIV, IWORK_DWNNLS,     &
-                     WORK_DWNNLS)
-                  IF (IERR_PRIV .EQ. 1) THEN ! Failure to converge.
+
+                  !! The following code is obsolete starting in version 2,
+                  !! as we have moved away from using DWNNLS for projections.
+                  !
+                  !! Since at least one projection has already been done,
+                  !! the work arrays have already been allocated.
+                  !PRGOPT_DWNNLS(1) = 1.0_R8
+                  !IWORK_DWNNLS(1) = 6*D + 6
+                  !IWORK_DWNNLS(2) = 2*D + 2
+                  !! Set equality constraint.
+                  !W_DWNNLS(1,1:D+2) = 1.0_R8
+                  !! Populate LS coefficient matrix and RHS.
+                  !FORALL (I=1:D+1) W_DWNNLS(2:D+1,I) = PTS(:,SIMPS(I,MI))
+                  !W_DWNNLS(2:D+1,D+2) = PROJ(:)
+                  !! Project onto the current simplex.
+                  !CALL DWNNLS(W_DWNNLS, D+1, 1, D, D+1, 0, PRGOPT_DWNNLS, &
+                  !   WEIGHTS(:,MI), WORK(1), IERR_PRIV, IWORK_DWNNLS,     &
+                  !   WORK_DWNNLS)
+                  !IF (IERR_PRIV .EQ. 1) THEN ! Failure to converge.
+                  !   !$OMP CRITICAL(CHECK_IERR)
+                  !   IERR(MI) = 71
+                  !   !$OMP END CRITICAL(CHECK_IERR)
+                  !   CYCLE OUTER
+                  !ELSE IF (IERR_PRIV .EQ. 2) THEN ! Illegal input detected.
+                  !   !$OMP CRITICAL(CHECK_IERR)
+                  !   IERR(MI) = 72
+                  !   !$OMP END CRITICAL(CHECK_IERR)
+                  !   CYCLE OUTER
+                  !END IF
+
+                  ! New code (version 2) for computing projections via BQPD.
+                  ! Regretfully, this step must be done serially since BQPD is
+                  ! not thread safe. However, this is likely for the best
+                  ! since BQPD is generally faster, but more memory-hungry
+                  ! than DELAUNAYSPARSE.
+                  !$OMP CRITICAL(PROJECT)
+                  CALL PROJECT(D, D+1, PTS(:,SIMPS(:,MI)), PROJ, MINRAD,  &
+                               IERR_PRIV, EPS=EPSL, WEIGHTS=WEIGHTS(:,MI))
+                  !$OMP END CRITICAL(PROJECT)
+                  IF (IERR_PRIV .NE. 0) THEN
                      !$OMP CRITICAL(CHECK_IERR)
-                     IERR(MI) = 71
-                     !$OMP END CRITICAL(CHECK_IERR)
-                     CYCLE OUTER
-                  ELSE IF (IERR_PRIV .EQ. 2) THEN ! Illegal input detected.
-                     !$OMP CRITICAL(CHECK_IERR)
-                     IERR(MI) = 72
+                     IF (IERR_PRIV < 0) THEN
+                        IERR(MI) = 70
+                     ELSE
+                        IERR(MI) = IERR_PRIV + 70
+                     END IF
                      !$OMP END CRITICAL(CHECK_IERR)
                      CYCLE OUTER
                   END IF
+
                   ! A solution has been found; return it.
                   EXIT INNER
                END IF
@@ -2392,7 +2525,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    DO I = 1, N
       IF(IERR_PRIV .NE. 0) CYCLE ! If an error occurs, skip to the end.
       ! Check that P* is inside the current ball.
-      IF (DNRM2(D, PTS(:,I) - CENTER_PRIV(:), 1) > MINRAD_PRIV) CYCLE
+      WORK(1:D) = PTS(:,I) - CENTER_PRIV(:)
+      IF (DNRM2(D, WORK(1:D), 1) > MINRAD_PRIV) CYCLE
       ! Check that P* is on the appropriate halfspace.
       SIDE2 = DDOT(D,PLANE(1:D),1,PTS(:,I),1) - PLANE(D+1)
       IF (SIDE1*SIDE2 < EPSL .OR. ANY(SIMPS(:,MI) .EQ. I)) CYCLE
@@ -2425,7 +2559,8 @@ IF (D > 1) THEN ! Check that D-1 > 0, otherwise the plane is trivial.
    !$OMP CRITICAL(REDUC_4)
    ! Check if PTS(:,VERTEX_PRIV) is inside the circumball.
    IF (VERTEX_PRIV .NE. 0) THEN
-      IF (DNRM2(D, PTS(:,VERTEX_PRIV) - CENTER(:), 1) < MINRAD) THEN
+      WORK(1:D) = PTS(:,VERTEX_PRIV) - CENTER(:)
+      IF (DNRM2(D, WORK(1:D), 1) < MINRAD) THEN
          MINRAD = MINRAD_PRIV
          CENTER(:) = CENTER_PRIV(:)
          SIMPS(D+1,MI) = VERTEX_PRIV
@@ -2517,97 +2652,118 @@ END IF
          END IF
 
          ! Otherwise, project the extrapolation point onto the convex hull.
-!         CALL PROJECT(); IF (IERR_PRIV .NE. 0) CYCLE OUTER
+         ! Regretfully, this step must be done serially since BQPD is not
+         ! thread safe. However, this is likely for the best since BQPD is
+         ! generally faster, but more memory-hungry than DELAUNAYSPARSE.
+         !$OMP CRITICAL(PROJECT)
+         CALL PROJECT(D, N, PTS, PROJ, RNORML, IERR_PRIV, EPS=EPSL)
+         !$OMP END CRITICAL(PROJECT)
+         IF (IERR_PRIV .NE. 0) THEN
+            ! Set the error flag and skip this point.
+            !$OMP CRITICAL(CHECK_IERR)
+            IF (IERR_PRIV < 0) THEN
+               IERR(MI) = 70
+            ELSE
+               IERR(MI) = IERR_PRIV + 70
+            END IF
+            !$OMP END CRITICAL(CHECK_IERR)
+            CYCLE OUTER
+         END IF
 
-
-!******************************************************************************
-! Due to OpenMP's handling of variable scope, the parallel (identical to serial)
-! implementation of the subroutine PROJECT() has been in-lined here.
+!! Old code for computing projections, changed in version 2.
 !
-! SUBROUTINE PROJECT()
-! Project a point outside the convex hull of the point set onto the convex hull
-! by solving an inequality constrained least squares problem. The solution to
-! the least squares problem gives the projection as a convex combination of the
-! data points. The projection can then be computed by performing a matrix
-! vector multiplication.
-
-! Allocate work arrays.
-IF (.NOT. ALLOCATED(IWORK_DWNNLS)) THEN
-   ALLOCATE(IWORK_DWNNLS(D+1+N), STAT=IERR_PRIV)
-   IF(IERR_PRIV .NE. 0) THEN
-      ! Store the error code.
-      !$OMP CRITICAL(CHECK_IERR)
-      IERR(MI) = 70
-      !$OMP END CRITICAL(CHECK_IERR)
-      CYCLE OUTER
-   END IF
-END IF
-IF (.NOT. ALLOCATED(WORK_DWNNLS)) THEN
-   ALLOCATE(WORK_DWNNLS(D+1+N*5), STAT=IERR_PRIV)
-   IF(IERR_PRIV .NE. 0) THEN
-      ! Store the error code.
-      !$OMP CRITICAL(CHECK_IERR)
-      IERR(MI) = 70
-      !$OMP END CRITICAL(CHECK_IERR)
-      CYCLE OUTER
-   END IF
-END IF
-IF (.NOT. ALLOCATED(W_DWNNLS)) THEN
-   ALLOCATE(W_DWNNLS(D+1,N+1), STAT=IERR_PRIV)
-   IF(IERR_PRIV .NE. 0) THEN
-      ! Store the error code.
-      !$OMP CRITICAL(CHECK_IERR)
-      IERR(MI) = 70
-      !$OMP END CRITICAL(CHECK_IERR)
-      CYCLE OUTER
-   END IF
-END IF
-IF (.NOT. ALLOCATED(X_DWNNLS)) THEN
-   ALLOCATE(X_DWNNLS(N), STAT=IERR_PRIV)
-   IF(IERR_PRIV .NE. 0) THEN
-      ! Store the error code.
-      !$OMP CRITICAL(CHECK_IERR)
-      IERR(MI) = 70
-      !$OMP END CRITICAL(CHECK_IERR)
-      CYCLE OUTER
-   END IF
-END IF
-
-! Initialize work array and settings values.
-IWORK_DWNNLS(1) = D+1+5*N
-IWORK_DWNNLS(2) = D+1+N
-W_DWNNLS(1, :) = 1.0_R8          ! Set convexity (equality) constraint.
-W_DWNNLS(2:D+1,1:N) = PTS(:,:)   ! Copy data points.
-W_DWNNLS(2:D+1,N+1) = PROJ(:)    ! Copy extrapolation point.
-! Compute the solution to the inequality constrained least squares problem to
-! get the projection coefficients.
-CALL DWNNLS(W_DWNNLS, D+1, 1, D, N, 0, PRGOPT_DWNNLS, X_DWNNLS, RNORML, &
-   IERR_PRIV, IWORK_DWNNLS, WORK_DWNNLS)
-IF (IERR_PRIV .EQ. 1) THEN ! Failure to converge.
-   ! Store the error code.
-   !$OMP CRITICAL(CHECK_IERR)
-   IERR(MI) = 71
-   !$OMP END CRITICAL(CHECK_IERR)
-   CYCLE OUTER
-ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
-   ! Store the error code.
-   !$OMP CRITICAL(CHECK_IERR)
-   IERR(MI) = 72
-   !$OMP END CRITICAL(CHECK_IERR)
-   CYCLE OUTER
-END IF
-! Compute the actual projection via matrix vector multiplication.
-CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
-! Zero all weights that are approximately zero and renormalize the sum.
-WHERE (X_DWNNLS < EPSL) X_DWNNLS = 0.0_R8
-X_DWNNLS(:) = X_DWNNLS(:) / SUM(X_DWNNLS)
-! Compute the actual projection via matrix vector multiplication.
-CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
-RNORML = DNRM2(D, PROJ(:) - Q(:,MI), 1)
-! RETURN
-! END SUBROUTINE PROJECT
-! End of in-lined code for PROJECT().
-!******************************************************************************
+!
+!!         CALL PROJECT(); IF (IERR_PRIV .NE. 0) CYCLE OUTER
+!
+!
+!!******************************************************************************
+!! Due to OpenMP's handling of variable scope, the parallel (identical to serial)
+!! implementation of the subroutine PROJECT() has been in-lined here.
+!!
+!! SUBROUTINE PROJECT()
+!! Project a point outside the convex hull of the point set onto the convex hull
+!! by solving an inequality constrained least squares problem. The solution to
+!! the least squares problem gives the projection as a convex combination of the
+!! data points. The projection can then be computed by performing a matrix
+!! vector multiplication.
+!
+!! Allocate work arrays.
+!IF (.NOT. ALLOCATED(IWORK_DWNNLS)) THEN
+!   ALLOCATE(IWORK_DWNNLS(D+1+N), STAT=IERR_PRIV)
+!   IF(IERR_PRIV .NE. 0) THEN
+!      ! Store the error code.
+!      !$OMP CRITICAL(CHECK_IERR)
+!      IERR(MI) = 70
+!      !$OMP END CRITICAL(CHECK_IERR)
+!      CYCLE OUTER
+!   END IF
+!END IF
+!IF (.NOT. ALLOCATED(WORK_DWNNLS)) THEN
+!   ALLOCATE(WORK_DWNNLS(D+1+N*5), STAT=IERR_PRIV)
+!   IF(IERR_PRIV .NE. 0) THEN
+!      ! Store the error code.
+!      !$OMP CRITICAL(CHECK_IERR)
+!      IERR(MI) = 70
+!      !$OMP END CRITICAL(CHECK_IERR)
+!      CYCLE OUTER
+!   END IF
+!END IF
+!IF (.NOT. ALLOCATED(W_DWNNLS)) THEN
+!   ALLOCATE(W_DWNNLS(D+1,N+1), STAT=IERR_PRIV)
+!   IF(IERR_PRIV .NE. 0) THEN
+!      ! Store the error code.
+!      !$OMP CRITICAL(CHECK_IERR)
+!      IERR(MI) = 70
+!      !$OMP END CRITICAL(CHECK_IERR)
+!      CYCLE OUTER
+!   END IF
+!END IF
+!IF (.NOT. ALLOCATED(X_DWNNLS)) THEN
+!   ALLOCATE(X_DWNNLS(N), STAT=IERR_PRIV)
+!   IF(IERR_PRIV .NE. 0) THEN
+!      ! Store the error code.
+!      !$OMP CRITICAL(CHECK_IERR)
+!      IERR(MI) = 70
+!      !$OMP END CRITICAL(CHECK_IERR)
+!      CYCLE OUTER
+!   END IF
+!END IF
+!
+!! Initialize work array and settings values.
+!IWORK_DWNNLS(1) = D+1+5*N
+!IWORK_DWNNLS(2) = D+1+N
+!W_DWNNLS(1, :) = 1.0_R8          ! Set convexity (equality) constraint.
+!W_DWNNLS(2:D+1,1:N) = PTS(:,:)   ! Copy data points.
+!W_DWNNLS(2:D+1,N+1) = PROJ(:)    ! Copy extrapolation point.
+!! Compute the solution to the inequality constrained least squares problem to
+!! get the projection coefficients.
+!CALL DWNNLS(W_DWNNLS, D+1, 1, D, N, 0, PRGOPT_DWNNLS, X_DWNNLS, RNORML, &
+!   IERR_PRIV, IWORK_DWNNLS, WORK_DWNNLS)
+!IF (IERR_PRIV .EQ. 1) THEN ! Failure to converge.
+!   ! Store the error code.
+!   !$OMP CRITICAL(CHECK_IERR)
+!   IERR(MI) = 71
+!   !$OMP END CRITICAL(CHECK_IERR)
+!   CYCLE OUTER
+!ELSE IF (IERR(MI) .EQ. 2) THEN ! Illegal input detected.
+!   ! Store the error code.
+!   !$OMP CRITICAL(CHECK_IERR)
+!   IERR(MI) = 72
+!   !$OMP END CRITICAL(CHECK_IERR)
+!   CYCLE OUTER
+!END IF
+!! Compute the actual projection via matrix vector multiplication.
+!CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
+!! Zero all weights that are approximately zero and renormalize the sum.
+!WHERE (X_DWNNLS < EPSL) X_DWNNLS = 0.0_R8
+!X_DWNNLS(:) = X_DWNNLS(:) / SUM(X_DWNNLS)
+!! Compute the actual projection via matrix vector multiplication.
+!CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X_DWNNLS, 1, 0.0_R8, PROJ, 1)
+!RNORML = DNRM2(D, PROJ(:) - Q(:,MI), 1)
+!! RETURN
+!! END SUBROUTINE PROJECT
+!! End of in-lined code for PROJECT().
+!!******************************************************************************
 
 
          ! Check the value of RNORML for over-extrapolation.
@@ -2673,11 +2829,11 @@ IF (PRESENT(INTERP_IN)) THEN
    !$OMP END DO
 END IF
 
-! Free optional work arrays.
-IF (ALLOCATED(IWORK_DWNNLS)) DEALLOCATE(IWORK_DWNNLS)
-IF (ALLOCATED(WORK_DWNNLS))  DEALLOCATE(WORK_DWNNLS)
-IF (ALLOCATED(W_DWNNLS))     DEALLOCATE(W_DWNNLS)
-IF (ALLOCATED(X_DWNNLS))     DEALLOCATE(X_DWNNLS)
+!! Free optional work arrays.
+!IF (ALLOCATED(IWORK_DWNNLS)) DEALLOCATE(IWORK_DWNNLS)
+!IF (ALLOCATED(WORK_DWNNLS))  DEALLOCATE(WORK_DWNNLS)
+!IF (ALLOCATED(W_DWNNLS))     DEALLOCATE(W_DWNNLS)
+!IF (ALLOCATED(X_DWNNLS))     DEALLOCATE(X_DWNNLS)
 !$OMP END PARALLEL 
 ! End of Level 1 parallel region.
 
@@ -2716,6 +2872,7 @@ REAL(KIND=R8), INTENT(OUT) :: MINDIST, DIAMETER, SCALE
 
 ! Local variables.
 REAL(KIND=R8) :: PTS_CENTER(D) ! The center of the data points PTS.
+REAL(KIND=R8) :: WORK_TMP(D) ! A smaller local work array.
 REAL(KIND=R8) :: DISTANCE ! The current distance.
 
 ! Initialize local values.
@@ -2748,15 +2905,16 @@ FORALL (I = 1:M) Q(:,I) = (Q(:,I) - PTS_CENTER(:)) / SCALE
 IF (EXACTL) THEN
    ! If exact error error checking is turned on, then compute the DIAMETER
    ! and MINDIST values.
-   !$OMP PARALLEL DO &
-   !$OMP& PRIVATE(I, DISTANCE),    &
-   !$OMP& REDUCTION(MAX:DIAMETER), &
-   !$OMP& REDUCTION(MIN:MINDIST),  &
-   !$OMP& SCHEDULE(STATIC, 100),   &
+   !$OMP PARALLEL DO                      &
+   !$OMP& PRIVATE(I, DISTANCE, WORK_TMP), &
+   !$OMP& REDUCTION(MAX:DIAMETER),        &
+   !$OMP& REDUCTION(MIN:MINDIST),         &
+   !$OMP& SCHEDULE(STATIC, 100),          &
    !$OMP& DEFAULT(SHARED)
    DO I = 1, N ! Cycle through all pairs of points.
       DO J = I + 1, N
-         DISTANCE = DNRM2(D, PTS(:,I) - PTS(:,J), 1) ! Compute the distance.
+         WORK_TMP(:) = PTS(:,I) - PTS(:,J)
+         DISTANCE = DNRM2(D, WORK_TMP, 1) ! Compute the distance.
          IF (DISTANCE > DIAMETER) THEN ! Compare to the current diameter.
             DIAMETER = DISTANCE
          END IF
@@ -2776,3 +2934,294 @@ RETURN
 END SUBROUTINE RESCALE
 
 END SUBROUTINE DELAUNAYSPARSEP
+
+
+! The remainder of this file contains the PROJECT subroutine for computing the
+! projection of an extrapolation point Z onto the convex hull of N points PTS
+! in R^D, via the subroutine BQPD.
+!
+! It also contains an auxiliary subroutine GDOTX that is used by BQPD to
+! efficiently compute the gradient of the Hessian, but is not recommended
+! for external use.
+
+SUBROUTINE PROJECT(D, N, PTS, Z, RNORM, IERR, EPS, WEIGHTS)
+! Project a point outside the convex hull of the point set onto the convex
+! hull by solving a non negatively constrained least squares problem with 1
+! equality constraint (an instance of the WNNLS problem):
+!
+!    min_X   || MATMUL(PTS, X) - Z ||   s.t.   X >= 0, SUM(X) == 1
+!
+! The solution to the WNNLS problem stated above gives the projection Z_hat as
+! a convex combination of the data points:
+!
+!   Z_hat = MATMUL(PTS, X).
+!
+! The above WNNLS problem is solved via R. Fletcher's QP solver: BQPD.
+! Compared to other existing (D)WNNLS solvers, BQPD's flexible nature allows
+! us to exploit the sparsity in the solution X, which should contain at most
+! D positive entries (inactive constraints).
+!
+!
+! On input:
+!
+! D is the dimension of the space for PTS and Z.
+!
+! N is the number of data points in PTS.
+!
+! PTS(1:D, 1:N) is a real valued matrix with N columns, each containing the
+!    coordinates of a single data point in R^D.
+!
+! Z(1:D) is a real vector specifying the coordinates of a single
+!    extrapolation point in R^D.
+!
+!
+! On output:
+!
+! Z is overwritten with the result of the projection (labeled Z_hat above).
+!
+! RNORM contains the norm of the residual vector || Z - Z_hat ||.
+!
+! IERR contains an integer valued error flag (0=success) forwaded from BQPD.
+!    Possible exit codes are listed below:
+!
+!       0 = solution obtained
+!       1 = unbounded problem detected (f(x)<=fmin would occur)
+!       2 = bl(i) > bu(i) for some i
+!       3 = infeasible problem detected in Phase 1
+!       4 = incorrect setting of m, n, kmax, mlp, mode or tol
+!       5 = not enough space in lp
+!       6 = not enough space for reduced Hessian matrix (increase kmax)
+!       7 = not enough space for sparse factors (sparse code only)
+!       8 = maximum number of unsuccessful restarts taken
+!      -1 = a memory allocation error occurred (indicates the problem size is
+!           too large for the additional memory overhead from extrapolation)
+!
+!
+! Optional arguments:
+!
+! EPS contains the real working precision for the problem on input. By default,
+!    EPS is assigned \sqrt{\mu} where \mu denotes the unit roundoff for the
+!    machine. In general, any values that differ by less than EPS are judged
+!    as equal, and any weights that are greater than -EPS are judged as
+!    nonnegative.  EPS cannot take a value less than the default value of
+!    \sqrt{\mu}. If any value less than \sqrt{\mu} is supplied, the default
+!    value will be used instead automatically. Note that in order to ensure
+!    that DELAUNAYSPARSE will be within tolerances, BQPD does not use the
+!    value of EPS given here. Instead, BQPD is given a tolerance of
+!    EPS ** 1.5.
+!
+! WEIGHTS(N) is assigned the projection weights on output, when present.
+! 
+!
+! Subroutines and functions directly referenced from BLAS are
+!      DNRM2, DGEMV.
+! BQPD, its utility functions, and its sparse linear algebra library are
+! also referenced.
+!
+!
+! This work is from a modification to the driver for BQPD by R. Fletcher,
+! with modifications made by Tyler H. Chang (THC) and Sven Leyffer (SL).
+!
+!
+! Version history:
+!    
+! Version 1: Forked from BQPD by SL (Aug 2023)
+!            Converted to f90 by THC (Sep 2023)
+! 
+USE REAL_PRECISION, ONLY : R8
+IMPLICIT NONE
+
+! Input arguments.
+INTEGER, INTENT(IN) :: D, N
+REAL(KIND=R8), INTENT(IN) :: PTS(:, :)
+REAL(KIND=R8), INTENT(INOUT) :: Z(:)
+
+! Output arguments.
+REAL(KIND=R8), INTENT(OUT) :: RNORM
+INTEGER, INTENT(OUT) :: IERR
+
+! Optional arguments.
+REAL(KIND=R8), OPTIONAL, INTENT(IN) :: EPS
+REAL(KIND=R8), OPTIONAL, INTENT(OUT) :: WEIGHTS(:)
+
+! Integer parameters, used by BQPD.
+INTEGER, PARAMETER :: MLP=40 ! Maximum recursion level for BQPD.
+INTEGER, PARAMETER :: MODE=0 ! BQPD operation mode (see bqpd.f).
+
+! Local variables.
+INTEGER :: I ! Loop index.
+INTEGER :: KMAX, MXG, MXWS_, NNZA ! Work array sizes for BQPD.
+INTEGER :: K, KMX, PEQ ! Integer inputs/outputs to BQPD.
+REAL(KIND=R8) :: F, FMIN ! Real inputs/outputs to BQPD.
+
+! Input and work arrays used by BQPD.
+INTEGER, ALLOCATABLE :: LS(:), LA(:), LWS(:)
+INTEGER :: LP(MLP), INFO(1)
+REAL(KIND=R8), ALLOCATABLE :: A(:), BL(:), BU(:), E(:), G(:), R(:), V(:), &
+                              W(:), WS(:), X(:)
+REAL(KIND=R8) :: ALP(MLP)
+
+! Common blocks for passing bookkeeping information, needed by BQPD.
+INTEGER :: IPRINT, NOUT ! BQPD operation modes (set below).
+INTEGER :: KK, LL, MXWS, MXLWS ! BQPD workspace bookkeeping (set below).
+INTEGER :: KKK, LLL ! Variables set by BQPD (not defined here).
+REAL(KIND=R8) :: EPSL, EMIN, TOL ! BQPD tolerance (set below).
+COMMON/NOUTC/NOUT ! Share the output unit to BQPD.
+COMMON/IPRINTC/IPRINT ! Share the level of print dumps to BQPD.
+COMMON/WSC/KK,LL,KKK,LLL,MXWS,MXLWS ! Share the workspace sizes with BQPD.
+COMMON/EPSC/EPSL,TOL,EMIN ! Share epsilon/tolerance parameters with BQPD.
+
+! External functions and subroutines.
+REAL(KIND=R8), EXTERNAL :: DNRM2
+EXTERNAL :: BQPD
+EXTERNAL :: DGEMV
+
+! Set the BQPD operation mode.
+IPRINT=0; NOUT=6
+! Set BQPD's tolerances.
+EMIN = 0.0_R8
+EPSL = EPSILON(0.0_R8) ! Get the machine unit roundoff constant.
+TOL = EPSL ** 0.75_R8 ! The default tolerance is EPSL^0.75.
+IF (PRESENT(EPS)) THEN
+   IF (TOL < (EPS ** 1.5_R8)) THEN ! Ignore small precisions.
+      TOL = EPS ** 1.5_R8
+   END IF
+END IF
+! Set the size of Hessian (KK) and other BQPD bookkeeping constants.
+KK   = D*N+D
+KMAX = D+1
+LL   = 2
+NNZA = 2*N
+! Set the storage in WS and LWS for MATMUL(sparseL, F).
+MXWS_ = 5 * N + N
+MXG = KMAX * (KMAX + 9) / 2 + 2 * (N + 1) + KK
+MXWS = MXWS_ + MXG + KK
+MXLWS = 1 + 2 * MXG + KMAX + 9 * N + 1
+
+! Allocate BQPD input arrays and work arrays.
+ALLOCATE(A(NNZA), BL(N+1), BU(N+1), E(N+1), G(N), R(N+1), V(N), &
+         W(N+1), WS(MXWS), X(N), STAT=IERR)
+IF (IERR .NE. 0) THEN
+   IERR = -1; RETURN; END IF
+ALLOCATE(LS(N+1), LA(0:NNZA+3), LWS(0:MXLWS), STAT=IERR)
+IF (IERR .NE. 0) THEN
+   IERR = -1; RETURN; END IF
+
+! Set the stride of WS.
+LWS(0) = D
+
+! Copy the Hessian information to the front of the workspace (WS) array.
+DO I=1,N
+   WS((I-1)*D+1:I*D) = PTS(:,I)
+ENDDO
+! Form the linear part of the objective function in the V array.
+CALL DGEMV('T', D, N, -1.0_R8, PTS, D, Z, 1, 0.0_R8, V, 1)
+! Generate the gradient and constraint matrix in BQPD's sparse format.
+! See sparseA.f for more details.
+LA(0)=NNZA+1
+DO I=1,N
+   A(I) = V(I)
+   LA(I) = I
+   A(N+I) = 1.0_R8
+   LA(N+I) = I
+ENDDO
+LA(NNZA+1) = 1
+LA(NNZA+2) = N+1
+LA(NNZA+3) = 2*N+1
+
+! Set the lower/upper bounds on BQPD's optimization variables (X's).
+BL(:N) = 0.0_R8
+BU(:N) = 1.0_R8
+! Set lower/upper bounds on the equality constraint (SUM(X) == 1).
+BL(N+1) = 1.0_R8
+BU(N+1) = 1.0_R8
+
+! Set BQPD's diagnostic information.
+FMIN = -DNRM2(D, Z, 1) ** 2.0_R8 - 1.0_R8 ! Lower bound on objective.
+K = D ! Dimension of the reduced space (set of inactive constraints).
+KMX = MIN(N, KMAX) ! Set the maximum value for K.
+! Solve the problem with BQPD.
+CALL BQPD(N, 1, K, KMX, A, LA, X, BL, BU, F, FMIN, G, R, W, E, LS, &
+          ALP, LP, MLP, PEQ, WS, LWS, MODE, IERR, INFO, IPRINT, NOUT)
+IF (IERR .NE. 0) THEN ! If an error occurred, exit immediately.
+   RETURN; END IF
+
+! Compute the true projection and residual.
+CALL DGEMV('N', D, N, 1.0_R8, PTS, D, X, 1, 0.0_R8, V, 1)
+RNORM = DNRM2(D, V(1:D) - Z, 1)
+Z = V(1:D) ! Return the projection.
+
+IF (PRESENT(WEIGHTS)) WEIGHTS(:) = X(:)
+
+!! Uncomment for DEBUG: Print the raw output of BQPD.
+!WRITE(NOUT,*)'OBJECTIVE = ',F,'   K =',K
+!WRITE(NOUT,*)'IFAIL = ',IERR,'   NUMBER OF PIVOTS = ',INFO(1)
+!WRITE(NOUT,*)'NONZERO X:'
+!DO I=1,N
+!   IF (X(I).GT.0.0_R8) THEN
+!      WRITE(NOUT,*) 'X(',I,') = ',X(I)
+!   ENDIF
+!ENDDO
+!
+!WRITE(NOUT,*) 'Residual vector: ', RNORM
+!WRITE(NOUT,*) 'Projection: ', Z
+
+! Free dynamic input and work arrays.
+DEALLOCATE(A, BL, BU, E, G, R, V, W, WS, X)
+DEALLOCATE(LS, LA, LWS)
+
+RETURN
+END SUBROUTINE PROJECT
+
+SUBROUTINE GDOTX(N, X, WS, LWS, V)
+! Auxiliary subroutine needed by BQPD to compute the gradient v = <G, x>
+!    where G = <PTS, PTS>. Since PTS is a DxN matrix and N could be large,
+!    we will not explicitly form the NxN matrix G.
+!
+!
+! On input:
+!
+! N is the integer length of the gradient vector.
+!
+! X is an array of length N containing the current iterate.
+!
+! WS is a real valued workspace array, whose first D*N entries contain PTS,
+!    stored in (flattened) column-major order.
+!
+! LWS is an integer valued workspace array, with LWS(0) contains the value
+!    of D.
+!
+!
+! On output:
+!
+! V is a real valued vector of length D containing < <PTS, PTS>, x >.
+!
+!
+! Uses the external BLAS subroutine DGEMV.
+!
+USE REAL_PRECISION, ONLY : R8
+IMPLICIT NONE
+
+! Input arguments.
+INTEGER, INTENT(IN) :: N
+REAL(KIND=R8), INTENT(IN) :: X(*)
+REAL(KIND=R8), INTENT(INOUT) :: WS(*)
+INTEGER, INTENT(IN) :: LWS(0:*)
+
+! Output arguments.
+REAL(KIND=R8), INTENT(OUT) :: V(*)
+
+! Local variables.
+INTEGER :: D ! Problem dimension.
+
+! External subroutines.
+EXTERNAL :: DGEMV
+
+! Get the problem dimension from the 0th entry of LWS.
+D = LWS(0)
+! Compute V = <PTS, PTS> * X without explicitly forming G.
+CALL DGEMV('N', D, N, 1.0_R8, WS(:N*D), D, X, 1, 0.0_R8, WS(N*D+1:N*D+D), 1)
+CALL DGEMV('T', D, N, 1.0_R8, WS(:N*D), D, WS(N*D+1:N*D+D), 1, 0.0_R8, V, 1)
+
+RETURN
+END SUBROUTINE GDOTX
