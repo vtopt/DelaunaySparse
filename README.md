@@ -97,16 +97,18 @@ To cite this work, please use
 The new ``PROJECT`` subroutine released in Version 2 is described in
 
 ```
-@article{TOMSremark1012,
-    author = {Chang, Tyler H. and Watson, Layne T. and Leyffer, Sven and Lux, Thomas C. H. and Almohri, Hussain M. J.},
-    title = {Remark on {Algorithm 1012}: Computing projections with large data sets},
-    year = {2024},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    journal = {ACM Trans. Math. Softw.},
-    numpages = {7},
-    doi = {10.1145/3656581},
-    note = {In press}
+@article{TOMSremark2024,
+  author = {Chang, Tyler H. and Watson, Layne T. and Leyffer, Sven and Lux, Thomas C. H. and Almohri, Hussain M. J.},
+  title = {Remark on {Algorithm} 1012: Computing projections with large data sets},
+  year = {2024},
+  journal = {ACM Transactions on Mathematical Software},
+  volume = {50},
+  number = {2},
+  articleno = {12},
+  numpages = {8},
+  publisher = {Association of Computing Machinery},
+  doi = {10.1145/3656581},
+}
 ```
 
 ## Inquiries
